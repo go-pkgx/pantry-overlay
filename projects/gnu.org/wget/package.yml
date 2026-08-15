@@ -13,7 +13,12 @@ provides:
   - bin/wget
 
 dependencies:
-  openssl.org: '*'
+  # ^3, not '*': this overlay exists so an INSTALL resolves what the published
+  # bottle was actually LINKED against. libcurl.so.4 in the go-pkgx registry
+  # NEEDs libssl.so.3 / libcrypto.so.3, so resolving openssl to 4.x installs a
+  # runtime that cannot load it ("libssl.so.3: cannot open shared object file").
+  # The upstream recipe's ^1.1 is unsatisfiable; '*' was too loose.
+  openssl.org: ^3
 
 build:
   dependencies:
