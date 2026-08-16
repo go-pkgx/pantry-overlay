@@ -1,0 +1,46 @@
+distributable:
+  url: git+https://github.com/AleoHQ/leo
+  ref: ${{version.tag}}
+
+versions:
+  github: AleoHQ/leo
+
+dependencies:
+  openssl.org: ^3
+  curl.se: ^8.4
+
+build:
+  dependencies:
+    rust-lang.org: ^1.65
+    rust-lang.org/cargo: "*"
+    cmake.org: ^3 # as of 1.12.0 for libz-ng-sys crate
+    git-scm.org: 2 # as of 2.3.1 for the _required_ examples subrepo
+    github.com/mikefarah/yq: '>=4' # context-aware toml version edit
+  script:
+    - git submodule update --init --recursive
+    # v4.0.2 shipped still pinned to 4.0.1. bump only leo's own crates — the
+    # path-deps in [workspace.dependencies] plus each member's package version —
+    # not a third-party dep that happens to match 4.0.1 (which the old broad
+    # `sed 's/4.0.1/.../g'` across every Cargo.toml would have clobbered).
+    - run:
+        - yq -i '(.workspace.dependencies[] | select(has("path")).version) = "={{version}}"' Cargo.toml
+        - for f in $(find crates -name Cargo.toml); do yq -i '(.package | select(has("version")).version) = "{{version}}"' "$f"; done
+      if: =4.0.2
+    - run: cargo install --locked --path . --root {{prefix}}
+      if: <4
+    - run: cargo install --locked --path crates/leo --root {{prefix}}
+      if: ">=4"
+
+provides:
+  - bin/leo
+
+test:
+  - leo new helloworld
+  - cd helloworld
+  - leo build
+  - run: leo build | grep "Compiled 'main.leo' into Aleo instructions"
+    if: <2
+  - run: leo build | grep "Compiled 'helloworld.aleo' into Aleo instructions"
+    if: ">=2"
+  - leo run main 21u32 32u32 | grep "53u32"
+  - leo --version | grep {{version}}

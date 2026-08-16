@@ -1,0 +1,45 @@
+distributable:
+  url: https://github.com/aome510/spotify-player/archive/refs/tags/{{version.tag}}.tar.gz
+  strip-components: 1
+
+provides:
+  - bin/spotify_player
+
+versions:
+  github: aome510/spotify-player
+
+dependencies:
+  openssl.org: ^3
+  github.com/libsixel/libsixel: ^1
+  linux:
+    alsa-project.org/alsa-lib: ^1
+    freedesktop.org/dbus: ^1
+
+build:
+  dependencies:
+    rust-lang.org: ">=1.60"
+    rust-lang.org/cargo: "*"
+    github.com/mikefarah/yq: ">=4" # safe-edit toml version field
+  script:
+    # they shipped v0.0.0 after v0.20.0; but the release is there, so we can build it.
+    - yq -i '.package.version = "{{version}}"' spotify_player/Cargo.toml
+    - cargo install $ARGS
+
+    # link to libsixel properly
+    - run:
+        # sed -n …/p (not grep|sed): emits the path if libsixel is linked, else
+        # empty + exit 0. grep exits 1 on no-match, which trips set -e/pipefail
+        # and aborts before the `if -z` guard below can skip the relink.
+        - SIXEL=$(otool -l {{prefix}}/bin/spotify_player | sed -n 's/.*name \(.*libsixel\.1\.dylib\) (offset.*/\1/p')
+        - if test ! -z "$SIXEL"; then
+        - install_name_tool -change "$SIXEL" {{deps.github.com/libsixel/libsixel.prefix}}/lib/libsixel.1.dylib {{prefix}}/bin/spotify_player
+        - fi
+      if: darwin
+  env:
+    ARGS:
+      - --locked
+      - --path spotify_player
+      - --root {{prefix}}
+      - --features sixel,notify,fzf
+
+test: test "$(spotify_player --version)" = "spotify_player {{version}}"

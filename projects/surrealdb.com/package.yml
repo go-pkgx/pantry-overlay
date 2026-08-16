@@ -1,0 +1,38 @@
+distributable:
+  url: https://github.com/surrealdb/surrealdb/archive/refs/tags/{{version.tag}}.tar.gz
+  strip-components: 1
+
+provides:
+  - bin/surreal
+
+versions:
+  github: surrealdb/surrealdb
+
+dependencies:
+  openssl.org: ^3
+
+build:
+  dependencies:
+    rust-lang.org: ">=1.60"
+    rust-lang.org/cargo: "*"
+    gnu.org/patch: "*" # rquickjs-sys:build.rs:L132
+  script:
+    # async state machines can exceed the default recursion limit (128)
+    - run: sed -i -f $PROP lib.rs
+      if: ^3.0.3
+      prop: |
+        1i #![recursion_limit = "256"]
+      working-directory: surrealdb/server/src
+    - cargo install --path . --locked --root {{prefix}}
+  env:
+    SURREAL_BUILD_METADATA: "pkgx"
+    RUSTFLAGS:
+      # required as of v1.4.0
+      - --cfg surrealdb_unstable
+    linux:
+      RUSTFLAGS:
+        # Needed to build `generic-array` for some odd reason
+        - -C linker=cc
+
+# FIXME: a better test needs to spin up the db server...
+test: surreal version
