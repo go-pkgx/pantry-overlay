@@ -1,7 +1,11 @@
 distributable:
-  url: https://ftp.gnu.org/gnu/gzip/gzip-{{ version }}.tar.xz
+  url: https://ftp.gnu.org/gnu/gzip/gzip-{{ version.raw }}.tar.xz
   strip-components: 1
 
+# version.raw, NOT version: GNU publishes `gzip-1.14.tar.xz`, and the normalised
+# version is 1.14.0, so `{{ version }}` asks for gzip-1.14.0.tar.xz and gets a
+# 404 on every release back to 1.3.13. gnu.org/tar already spells it that way.
+#
 # gzip exists nowhere in the upstream pantry, and its absence is not academic:
 # GNU tar delegates `-z` to an EXTERNAL gzip, so in a FROM-scratch rootfs that
 # carries tar and not gzip, every recipe doing
