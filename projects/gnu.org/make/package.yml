@@ -1,0 +1,54 @@
+distributable:
+  url: https://ftp.gnu.org/gnu/make/make-{{ version.raw }}.tar.gz
+  strip-components: 1
+
+versions:
+  url: https://ftp.gnu.org/gnu/make/
+  match: /make-\d+\.\d+(\.\d+)?\.tar\.gz/
+  strip:
+    - /make-/
+    - /.tar.gz/
+
+# On darwin these binaries link libintl from gnu.org/gettext — `otool -L` shows
+# it — and the closure never said so. gettext is in the base toolchain, so it is
+# always present while this is BUILT; only a consumer installing from the
+# registry sees the hole:
+#
+#   $ pkgm install gnu.org/make      # into an empty PKGX_DIR, darwin/aarch64
+#   $ make --version
+#   dyld: Library not loaded: @rpath/gnu.org/gettext/v1.0.0/lib/libintl.8.dylib
+#
+# This copy is the CONSUMER half. go-pkgx/packages carries the same change in
+# overrides/, which governs what bk builds; a resolver reads the recipe over
+# HTTP and would never see that one. Both halves or neither.
+#
+# darwin-only, and upstream is right without it: on a glibc system libintl lives
+# inside the libc, so there is genuinely nothing to depend on there.
+dependencies:
+  darwin:
+    gnu.org/gettext: '*'
+
+provides:
+  - bin/make
+
+interprets:
+  filename: Makefile
+  args: [make, --file]
+
+build:
+  dependencies:
+    gnu.org/m4: 1
+  script: |
+    ./configure --prefix={{ prefix }} --disable-dependency-tracking
+    make --jobs {{ hw.concurrency }} install
+
+test:
+  #TODO build self
+  script: |
+    make --file=$FIXTURE
+    test "$(cat foo)" = bar
+    make --question --file=$FIXTURE
+  fixture:
+    "foo:\n\techo bar > $@"
+  env:
+    MAKEFLAGS: --file=$FIXTURE

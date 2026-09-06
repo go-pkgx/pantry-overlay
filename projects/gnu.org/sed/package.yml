@@ -1,0 +1,53 @@
+distributable:
+  url: https://ftp.gnu.org/gnu/sed/sed-{{version.raw}}.tar.gz
+  strip-components: 1
+
+versions:
+  url: https://ftp.gnu.org/gnu/sed/
+  match: /sed-(\d+\.\d+(\.\d+)?)\.tar\.gz/
+  strip:
+    - /sed-/
+    - /.tar.gz/
+
+# On darwin these binaries link libintl from gnu.org/gettext — `otool -L` shows
+# it — and the closure never said so. gettext is in the base toolchain, so it is
+# always present while this is BUILT; only a consumer installing from the
+# registry sees the hole:
+#
+#   $ pkgm install gnu.org/sed      # into an empty PKGX_DIR, darwin/aarch64
+#   $ sed --version
+#   dyld: Library not loaded: @rpath/gnu.org/gettext/v1.0.0/lib/libintl.8.dylib
+#
+# This copy is the CONSUMER half. go-pkgx/packages carries the same change in
+# overrides/, which governs what bk builds; a resolver reads the recipe over
+# HTTP and would never see that one. Both halves or neither.
+#
+# darwin-only, and upstream is right without it: on a glibc system libintl lives
+# inside the libc, so there is genuinely nothing to depend on there.
+dependencies:
+  darwin:
+    gnu.org/gettext: '*'
+
+build:
+  # self-dep so brewkit installs an older sed; then shadow brewkit's libexec
+  # sed shim with a direct symlink so bare `sed` calls in generated Makefile
+  # snippets don't go through pkgx and race against our +brewing install.
+  dependencies:
+    gnu.org/sed: "*"
+  script:
+    - export PATH="{{deps.gnu.org/sed.prefix}}/bin:$PATH"
+    - ./configure $ARGS
+    - make --jobs {{ hw.concurrency }} install
+  env:
+    ARGS:
+      - --prefix="{{prefix}}"
+      - --disable-debug
+
+provides:
+  - bin/sed
+
+test:
+  fixture: Hello world!
+  script:
+    - sed -i 's/world/World/g' $FIXTURE
+    - test "$(cat $FIXTURE)" = 'Hello World!'
