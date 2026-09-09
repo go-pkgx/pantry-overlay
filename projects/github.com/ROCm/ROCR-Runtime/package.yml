@@ -51,7 +51,23 @@ versions:
 display-name: ROCr
 
 platforms:
-  - linux
+  # linux/x86-64 only, and not by preference.
+  #
+  # ROCm 7.2.4's core/util/utils.h includes <x86intrin.h> under
+  # `#if defined(__i386__) || defined(__x86_64__)` (line 79) and then calls
+  # _mm_clflush UNGUARDED at line 412, so on aarch64:
+  #
+  #   utils.h:412: error: use of undeclared identifier '_mm_clflush'
+  #
+  # The tempting patch — make the flush a no-op off x86 — is the one thing not
+  # to do. That function exists so a CPU write becomes visible to the GPU; a
+  # silent no-op would trade a build error for data corruption on hardware
+  # nobody here can test. The arm64 equivalent is cache maintenance that
+  # userspace may not simply issue, so it is a real port, not a guard.
+  #
+  # AMD does publish ROCm for sbsa, so this is worth reporting upstream rather
+  # than carrying. Until then the honest state is: built where it compiles.
+  - linux/x86-64
 
 dependencies:
   elfutils.org: '*'
