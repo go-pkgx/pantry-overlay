@@ -32,6 +32,13 @@ build:
     github.com/westes/flex: '*'
     perl.org: '*'
     freedesktop.org/pkg-config: '*'
+    # Not optional and not obvious: configure ENDS with
+    #   configure: error: no suitable Python interpreter found
+    # after trying python, python2, python3 and every python3.N and python2.N
+    # down to 2.0. Heimdal uses it to generate parts of the ASN.1 and test
+    # tooling, so there is nothing to switch off — the interpreter has to be in
+    # the closure.
+    python.org: '*'
   script:
     - ./configure $ARGS
     - make --jobs {{ hw.concurrency }}
