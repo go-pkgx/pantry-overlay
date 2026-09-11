@@ -1,0 +1,135 @@
+distributable:
+  # as of 2.44, this is a different tarball
+  - url: https://ftp.gnu.org/gnu/binutils/binutils-with-gold-{{ version.raw }}.tar.gz
+    strip-components: 1
+  - url: https://ftp.gnu.org/gnu/binutils/binutils-{{ version.raw }}.tar.gz
+    strip-components: 1
+  # ≤ 2.27 only published .tar.bz2 (and 2.28-2.32 publish both .tar.gz
+  # and .tar.bz2). Keep .tar.bz2 as a fallback for very old versions.
+  - url: https://ftp.gnu.org/gnu/binutils/binutils-{{ version.raw }}.tar.bz2
+    strip-components: 1
+
+versions:
+  url: https://ftp.gnu.org/gnu/binutils/
+  match: /binutils-\d+\.\d+(\.\d+)?.tar.gz/
+  strip:
+    - /binutils-/
+    - /.tar.gz/
+
+# NOTE: pkgx today ships 2.39 – 2.46 in dist.pkgx.dev. Older versions
+# (2.27 – 2.38) are required to build glibc 2.17 – 2.26 (the HPC /
+# manylinux2014 / RHEL 7-8 range; modern binutils ld emits relocation
+# types older glibc rejects, or rejects relocs older glibc emits).
+# Building those versions is empirically validated:
+# see projects/gnu.org/glibc/README.md "HPC bootstrap cascade".
+
+# --with-zstd (binutils >= 2.39) makes the BUILT binaries link libzstd, so it is
+# a RUNTIME dependency and not only a build one. Upstream declares it under
+# `build.dependencies` alone, with the comment "cheap to always include as a
+# build dep" — true when the flag did nothing, and no longer true once 2.39
+# started passing it. Measured on the published 2.47.0 bottles: 18 Mach-O on
+# darwin/aarch64 and 31 ELFs on linux/aarch64 reference libzstd.
+#
+# Nothing installs it, so every binutils tool dies at load time:
+#   dyld: Library not loaded: @rpath/facebook.com/zstd/v1/lib/libzstd.dylib
+#     Referenced from: .../gnu.org/binutils/v2.47.0/bin/strings
+# which is what stopped gnu.org/gcc 11.5.0 building for darwin/aarch64.
+dependencies:
+  facebook.com/zstd: ^1
+
+build:
+  dependencies:
+    gnu.org/bison: "*"
+    gnu.org/texinfo: "*"
+    # zstd is only used when --with-zstd is passed (>= 2.39). Cheap to
+    # always include as a build dep; the older versions' configure
+    # simply ignores it.
+    facebook.com/zstd: "*"
+    linux:
+      gnu.org/gcc: "*"
+      perl.org: ~5.42 # perl modules require matching minors
+
+  script:
+    - run: if test -f zutil.h; then sed -i '/define fdopen(fd,mode) NULL/d' zutil.h; fi
+      working-directory: zlib
+      if: <2.29
+
+    - run: if test -f errors.h; then sed -i -f $PROP errors.h; fi
+      working-directory: gold
+      prop: |
+        /#include "gold-threads.h"/i\
+        #include <string>
+      if: <2.29
+
+    # --with-zstd: only added to binutils 2.39+. Append at script time
+    # so old versions don't trip configure with "unrecognized option".
+    - run: export ARGS="$ARGS --with-zstd"
+      if: ">=2.39"
+
+    - ./configure $ARGS
+    - make --jobs {{ hw.concurrency }}
+    - make install
+
+  env:
+    ARGS:
+      - --prefix={{ prefix }}
+      - --disable-werror # old versions hit -Wformat warnings with modern gcc
+    linux:
+      ARGS:
+        - --enable-ld=yes
+        - --enable-gold=yes
+
+test:
+  script:
+    - run:
+        # On Darwin, the old versions don't support the Mach-O format at all, so test that they can read a simple static library instead.
+        - |
+          if test "$(uname)" = Darwin; then
+            printf 'int main(void) { return 0; }\n' > test.c
+            cc -c test.c -o test.o
+            ar rcS libtest.a test.o
+            strings libtest.a | grep -s _main
+            exit 0
+          fi
+      if: <2.29
+    - objdump -x $(which objdump) | grep -s $TEST_STRING
+  env:
+    # Representative output to look for
+    darwin:
+      TEST_STRING: _opendir
+    linux:
+      TEST_STRING: GNU_HASH
+
+provides:
+  darwin:
+    - bin/addr2line
+    - bin/ar
+    - bin/c++filt
+    - bin/elfedit
+    - bin/nm
+    - bin/objcopy
+    - bin/objdump
+    - bin/ranlib
+    - bin/readelf
+    - bin/size
+    - bin/strings
+    - bin/strip
+  linux:
+    - bin/addr2line
+    - bin/ar
+    - bin/as
+    - bin/c++filt
+    - bin/elfedit
+    - bin/gprof
+    - bin/ld
+    - bin/ld.bfd
+    # oof. deprecated: https://lists.gnu.org/archive/html/info-gnu/2025-02/msg00001.html
+    # - bin/ld.gold
+    - bin/nm
+    - bin/objcopy
+    - bin/objdump
+    - bin/ranlib
+    - bin/readelf
+    - bin/size
+    - bin/strings
+    - bin/strip
