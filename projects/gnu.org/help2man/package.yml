@@ -1,0 +1,65 @@
+distributable:
+  url: https://ftp.gnu.org/gnu/help2man/help2man-{{version}}.tar.xz
+  strip-components: 1
+
+versions:
+  url: https://ftp.gnu.org/gnu/help2man/
+  match: /help2man-\d+\.\d+\.\d+\.tar\.xz/
+  strip:
+    - /^help2man-/
+    - /\.tar\.xz/
+
+dependencies:
+  # gettext renumbered 0.26 → 1.0.0 and kept the same library: both ship
+  # libintl.8.dylib, verified by pulling each bottle. `^0` is now a stale
+  # constraint, and it is not merely cosmetic — help2man's perl XS records the
+  # pkgx MAJOR in its reference:
+  #   Library not loaded: @rpath/gnu.org/gettext/v0/lib/libintl.dylib
+  #     Referenced from: .../help2man/v1.49.3/lib/perl5/.../Locale/gettext.bundle
+  # so an environment holding gettext 1.0.0 — which gnu.org/texinfo's build
+  # produces, since it asks for `*` — cannot load it, and texinfo dies with
+  # "BEGIN failed--compilation aborted at .../help2man line 30".
+  gnu.org/gettext: '*'
+  perl.org: ~5.44 # perl modules require matching minors; must match gettext
+
+runtime:
+  env:
+    PERL5LIB: "{{prefix}}/lib/perl5:{{prefix}}/libexec/lib/perl5:$PERL5LIB"
+
+build:
+  dependencies:
+    cpanmin.us: "*"
+  script:
+    # wrap cc so cpanm's XS link step gets -headerpad_max_install_names
+    # (PERL_MM_OPT/OTHERLDFLAGS don't propagate through MakeMaker)
+    - run:
+        - WRAP=$(mktemp -d)
+        - install -Dm755 $PROP $WRAP/cc
+        - PATH="$WRAP:$PATH" CC="$WRAP/cc" cpanm -l {{prefix}} Locale::gettext
+        - rm -rf "$WRAP"
+      prop: |
+        #!/bin/sh
+        exec /usr/bin/cc -Wl,-headerpad_max_install_names -Wl,-rpath,{{pkgx.prefix}} "$@"
+      if: darwin
+    - run: cpanm -l {{prefix}} Locale::gettext
+      if: linux
+    - ./configure $CONFIGURE_ARGS
+    - make install
+    - run: sed -i '1s|.*|#!/usr/bin/env perl|' help2man
+      working-directory: ${{prefix}}/bin
+  env:
+    PERL5LIB: "{{prefix}}/lib/perl5:{{prefix}}/libexec/lib/perl5:$PERL5LIB"
+    CONFIGURE_ARGS:
+      - --disable-debug
+      - --disable-dependency-tracking
+      - --prefix="{{prefix}}"
+      - --libdir="{{prefix}}/lib"
+    darwin:
+      LDFLAGS: $LDFLAGS -Wl,-headerpad_max_install_names
+
+provides:
+  - bin/help2man
+
+test:
+  - help2man --version | grep {{version}}
+  - help2man --locale=en_US.UTF-8 help2man | grep {{version}}
