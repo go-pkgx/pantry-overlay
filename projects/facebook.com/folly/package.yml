@@ -7,7 +7,21 @@ versions:
 
 dependencies:
   boost.org: <1.89 # doesn't like the newest boost
-  gflags.github.io: ~2.2 # looking for glog's version
+  # Was `~2.2` (>=2.2 <2.3), which excludes every gflags this registry
+  # publishes: 2.3.0 and 2.3.1. 2.2.x was never built here, so a consumer
+  # resolving folly could not get a gflags at all — and folly's own bottle
+  # records the VERSIONED soname it linked against on the builder:
+  #   dyld: Library not loaded: @rpath/gflags.github.io/v2/lib/libgflags.2.2.2.dylib
+  #     Referenced from: .../folly/v2026.09.07.00/lib/libfolly.0.58.0-dev.dylib
+  # which is what killed facebook.com/fbthrift's build.
+  #
+  # Every sibling here already admits 2.3: fbthrift and fb303 say `^2.2.2`,
+  # watchman `^2`, wangle and edencommon `*`. folly was the only one left on a
+  # range that closes before the version we ship.
+  #
+  # This is the consumption half; the build half is go-pkgx/packages'
+  # facebook.com-folly-gflags-range.patch.
+  gflags.github.io: ^2
   google.com/glog: ^0.7 # since 2026.4.20
   libevent.org: "*"
   lz4.org: 1
