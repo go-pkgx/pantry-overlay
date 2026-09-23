@@ -1,0 +1,45 @@
+distributable:
+  url: https://ftp.gnu.org/gnu/libiconv/libiconv-{{version.marketing}}.tar.gz
+  strip-components: 1
+
+versions:
+  url: https://ftp.gnu.org/gnu/libiconv/
+  match: /libiconv-(\d+\.\d+(\.\d+)?)\.tar\.gz/
+  strip:
+    - /libiconv-/
+    - /.tar.gz/
+
+dependencies:
+  linux:
+    gnu.org/gcc/libstdcxx: 14
+  darwin:
+    # libiconv links libintl on darwin and declared nothing, so the closure
+    # never installed gettext and iconv could not start from a clean store:
+    #
+    #   dyld: Library not loaded: @rpath/gnu.org/gettext/v1/lib/libintl.8.dylib
+    #     Referenced from: .../gnu.org/libiconv/v1.18.0/bin/iconv
+    #
+    # darwin only: glibc carries the gettext runtime, so the linux build has no
+    # libintl reference at all. gettext does not depend on libiconv, so this
+    # introduces no cycle.
+    gnu.org/gettext: ^1
+
+build:
+  script:
+    - ./configure $ARGS
+    - make --jobs {{ hw.concurrency }}
+    - make install
+  env:
+    ARGS:
+      - --prefix="{{prefix}}"
+      - --disable-debug
+      - --disable-dependency-tracking
+      - --enable-extra-encodings
+      - --enable-static
+
+provides:
+  - bin/iconv
+
+test:
+  - g++ -std=c++11 test.cc -liconv
+  - ./a.out
