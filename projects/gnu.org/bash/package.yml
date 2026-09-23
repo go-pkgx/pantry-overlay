@@ -1,0 +1,90 @@
+distributable:
+  url: https://ftp.gnu.org/gnu/bash/bash-{{ version.raw }}.tar.gz
+  strip-components: 1
+
+versions:
+  url: https://ftp.gnu.org/gnu/bash/
+  match: /bash-\d+\.\d+(\.\d+)?.tar.gz/
+  strip:
+    - /^bash-/
+    - /\.tar\.gz$/
+
+provides:
+  - bin/bash
+  - bin/bashbug
+
+interprets:
+  extensions: bash
+  args: [bash, -e]
+
+dependencies:
+  # bash links libintl and declares nothing, so it cannot start from an empty
+  # store:
+  #
+  #   dyld: Library not loaded: @rpath/gnu.org/gettext/v1.0.0/lib/libintl.8.dylib
+  #
+  # That reference is FULL-VERSIONED, so this line alone is not enough — it also
+  # needs a rebuild, which is what turns it into the major-versioned sibling
+  # form fixup writes today. Without the declaration the rebuild would still
+  # ship an unsatisfiable closure, so both are required.
+  #
+  # darwin only: linux resolves libintl through glibc and runs today.
+  darwin:
+    gnu.org/gettext: ^1
+
+build:
+  script:
+    # bash <5 has `u32toutf16 (c, ws)` in lib/sh/unicode.c passing a wchar_t[]
+    # to an `unsigned short *`. The call sits behind `sizeof (wchar_t) == 2` so
+    # it is dead code wherever wchar_t is 4 bytes, but it is still type-checked,
+    # and clang 15+ / gcc 14+ promote -Wincompatible-pointer-types from a
+    # warning to an error. Same treatment as the implicit-declaration flag.
+    - run: CFLAGS="$CFLAGS -Wno-incompatible-pointer-types -Wno-implicit-int"
+      if: <5
+
+    # $LEGACY_ARGS is darwin-only (see env below) and empty elsewhere, so this
+    # is a no-op on linux, where bash <5 configures cleanly.
+    - run: ARGS="$ARGS $LEGACY_ARGS"
+      if: <5
+
+    # bash ships its own sbrk-based malloc and builds with it by DEFAULT. Every
+    # distribution turns it off (debian, ubuntu, fedora, arch all configure
+    # --without-bash-malloc) because it is slower, older, and interacts badly
+    # with anything that constrains the data segment.
+    #
+    # It also makes the resulting bash unusable under qemu-user: with qemu's
+    # default reserved address space it cannot allocate at ALL, dying on the
+    # first command it runs —
+    #   bash: xmalloc: setlinebuf.c:51: cannot allocate 2016 bytes (0 bytes allocated)
+    # while the same bash built --without-bash-malloc, and the distributions'
+    # own, run fine. That is what a cross-arch build under emulation hits, and
+    # the wreckage downstream (a make target failing, an `ln` linking a file to
+    # itself out of a variable no shell could set) looks like a broken recipe.
+    - run: ARGS="$ARGS --without-bash-malloc"
+
+    - ./configure --prefix={{ prefix }} $ARGS
+    - make --jobs {{ hw.concurrency }} install
+  env:
+    CFLAGS:
+      # causes bash to source ~/.bashrc when instantiated
+      # non-interactively from sshd. macOS’s bash does this so users expect it.
+      - -DSSH_SOURCE_BASHRC
+      - -Wno-implicit-function-declaration
+    darwin:
+      LDFLAGS: $LDFLAGS -Wl,-headerpad_max_install_names
+      LEGACY_ARGS:
+        # vsnprintf/snprintf are fortify macros on darwin, expanding to
+        # __builtin___v?snprintf_chk. bash <5 ships K&R replacements in
+        # lib/sh/snprintf.c and the macro rewrites their definitions into
+        # nonsense ("conflicting types for __builtin___vsnprintf_chk").
+        # Telling configure the libc functions exist skips the replacements.
+        - ac_cv_func_snprintf=yes
+        - ac_cv_func_vsnprintf=yes
+        # bash <5 unconditionally includes <libintl.h> when NLS is on; darwin
+        # has no gettext in the SDK, whereas linux gets it from glibc.
+        - --disable-nls
+
+test:
+  - bash --version | tee out
+  - grep {{version}} out
+  - bash -c "set -o pipefail"
