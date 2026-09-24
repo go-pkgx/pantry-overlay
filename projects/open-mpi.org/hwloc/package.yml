@@ -1,0 +1,52 @@
+distributable:
+  url: https://download.open-mpi.org/release/hwloc/v{{version.marketing}}/hwloc-{{version}}.tar.gz
+  strip-components: 1
+
+versions:
+  github: open-mpi/hwloc/tags
+  strip: /^hwloc-/
+
+dependencies:
+  # hwloc links libxml2 and declared nothing at all, so a bottle installed into
+  # an empty store cannot start:
+  #
+  #   dyld: Library not loaded: @rpath/gnome.org/libxml2/v2/lib/libxml2.2.dylib
+  #     Referenced from: .../open-mpi.org/hwloc/v2.15.0/lib/libhwloc.15.dylib
+  #
+  # ^2 rather than `*`: the reference names the MAJOR, and a bare `*` would
+  # drift off it the day libxml2 goes to 3 — the shape that has poppler asking
+  # for libjpeg-turbo/v2 while its closure installs v3 (go-pkgx/packages#207).
+  #
+  # Declaration only, no rebuild: the reference is already major-versioned, so
+  # it resolves as soon as libxml2 is in the closure.
+  gnome.org/libxml2: ^2
+
+build:
+  dependencies:
+    gnu.org/autoconf: "*"
+    gnu.org/libtool: "*"
+  script:
+    - ./configure $ARGS
+    - make --jobs {{ hw.concurrency }} install
+  env:
+    ARGS:
+      - --prefix="{{prefix}}"
+      - --enable-shared
+      - --enable-static
+      - --disable-cairo
+      - --without-x
+      - --disable-cpuid
+
+provides:
+  - bin/hwloc-annotate
+  - bin/hwloc-bind
+  - bin/hwloc-calc
+  - bin/hwloc-compress-dir
+  - bin/hwloc-diff
+  - bin/hwloc-distrib
+  - bin/hwloc-info
+  - bin/hwloc-patch
+  - bin/hwloc-ps
+  - bin/lstopo-no-graphics
+
+test: hwloc-info --version | grep {{version}}
