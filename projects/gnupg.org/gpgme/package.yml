@@ -1,0 +1,61 @@
+distributable:
+  url: https://gnupg.org/ftp/gcrypt/gpgme/gpgme-{{version.raw}}.tar.bz2
+  strip-components: 1
+
+versions:
+  url: https://gnupg.org/ftp/gcrypt/gpgme/
+  match: /gpgme-\d+\.\d+(\.\d+)?\.tar\.bz2/
+  strip:
+    - /gpgme-/
+    - /.tar.bz2/
+
+provides:
+  - bin/gpgme-config
+  - bin/gpgme-json
+  - bin/gpgme-tool
+
+build:
+  script:
+    - ./configure $ARGS
+    - make -j {{hw.concurrency}}
+    - make install
+  env:
+    ARGS:
+      - --prefix={{prefix}}
+      - --with-libassuan-prefix={{deps.gnupg.org/libassuan.prefix}}
+      - --with-libgpg-error-prefix={{deps.gnupg.org/libgpg-error.prefix}}
+      - --disable-gpg-test
+      - --disable-glibtest
+      - --disable-gpgconf-test
+      - --disable-gpg-test
+      - --disable-gpgsm-test
+      - --disable-g13-test
+    CFLAGS: $CFLAGS -Wno-implicit-function-declaration
+    CXXFLAGS: $CXXFLAGS -std=c++14
+    linux:
+      # references to gettid()
+      LDFLAGS: $LDFLAGS -Wl,--allow-shlib-undefined
+  dependencies:
+    gnupg.org: '*'
+    gnupg.org/libassuan: ^2.0.2
+    gnupg.org/libgpg-error: ^1.11
+
+# What gpgme LINKS, as opposed to what its build runs.
+#
+# Everything below was declared under build.dependencies and nowhere else, so a
+# closure that installs gpgme gets none of it. libgpgme.11.dylib names
+# libgpg-error, and a consumer's dyld does not:
+#
+#   dyld: Library not loaded: @rpath/gnupg.org/libgpg-error/v1.61.0/lib/libgpg-error.0.dylib
+#
+# which is what stopped poppler's build on darwin/aarch64 — g-ir-scanner loads
+# libgpgme to generate Poppler-0.18.gir and dies before the compiler is reached.
+#
+# The version in that path is the other half of the defect and a rebuild fixes
+# it: v1.61.0 is a FULL version directory, from before bk reduced a reference to
+# the major line its dependency guarantees.
+dependencies:
+  gnupg.org/libgpg-error: ^1
+  gnupg.org/libassuan: ^2
+
+test: test "$(gpgme-config --version)" = "{{version}}"
