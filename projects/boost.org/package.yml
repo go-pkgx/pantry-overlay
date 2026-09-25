@@ -1,0 +1,74 @@
+distributable:
+  - url: https://archives.boost.io/release/{{version}}/source/boost_{{version.major}}_{{version.minor}}_{{version.patch}}.tar.gz
+    strip-components: 1
+  # these appear to 404 now
+  - url: https://boostorg.jfrog.io/artifactory/main/release/{{ version }}/source/boost_{{version.major}}_{{version.minor}}_{{version.patch}}.tar.gz
+    strip-components: 1
+
+versions:
+  github: boostorg/boost
+  strip: /^boost-/
+
+dependencies:
+  facebook.com/zstd: ^1
+  # What boost LINKS, as opposed to what its build runs.
+  #
+  # libboost_iostreams.dylib names bzip2 and nothing declared it:
+  #
+  #   libboost_iostreams.dylib -> @rpath/sourceware.org/bzip2/v1/lib/libbz2.dylib
+  #
+  # so a closure that installs boost and not bzip2 cannot load it. ^1 is the
+  # major that reference records, not a guess.
+  #
+  # Found by `bk undeclared`. It was invisible until the rebuild for
+  # go-pkgx/packages#235 cleared the 12 bare @rpath references that had been
+  # failing first.
+  sourceware.org/bzip2: ^1
+
+build:
+  script:
+    - ./bootstrap.sh --prefix={{ prefix }}
+    - ./b2 $ARGS
+
+    # boost.org has libs that end up with name @rpath/libboost_atomic.dylib (offset 24)
+    # so we need to add @loader_path to the rpath
+    #
+    # @loader_path reaches boost's OWN libraries and nothing else. Its
+    # references to other packages are qualified —
+    # libboost_iostreams.dylib names @rpath/zlib.net/v1.3.2/lib/libz.1.dylib —
+    # and those resolve only from an rpath that reaches $PKGX_DIR. b2 does not
+    # read LDFLAGS, so the ones bk links into every other package never arrive
+    # here, and the bottle was refused rather than published:
+    #
+    #   fixup: sibling package reachable only through an absolute rpath:
+    #     .../lib/libboost_iostreams.dylib references
+    #     @rpath/zlib.net/v1.3.2/lib/libz.1.dylib but its only rpaths are
+    #     @loader_path
+    #
+    # From <prefix>/lib, $PKGX_DIR is three levels up: lib -> v1.91.0 ->
+    # boost.org -> $PKGX_DIR. The count is a fact about where this package
+    # installs, which is why it is written here and not guessed by the linker.
+    # There is room for the extra load command because ARGS already passes
+    # -headerpad_max_install_names.
+    - run: |
+        for LIB in *.dylib; do
+          install_name_tool -add_rpath @loader_path $LIB
+          install_name_tool -add_rpath @loader_path/../../.. $LIB
+        done
+      working-directory: ${{prefix}}/lib
+      if: darwin
+  env:
+    ARGS:
+      - install
+      - --prefix={{ prefix }}
+    darwin:
+      ARGS:
+        - linkflags=-Wl,-headerpad_max_install_names
+    linux:
+      ARGS:
+        - cxxflags=-fPIC
+        - linkflags=-fPIC
+
+test:
+  - c++ test.cpp -std=c++14 -lboost_iostreams -lzstd
+  - ./a.out
