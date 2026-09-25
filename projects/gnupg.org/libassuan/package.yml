@@ -1,0 +1,48 @@
+distributable:
+  url: https://gnupg.org/ftp/gcrypt/libassuan/libassuan-{{version}}.tar.bz2
+  strip-components: 1
+
+versions:
+  url: https://gnupg.org/ftp/gcrypt/libassuan/
+  match: /libassuan-(\d+\.\d+(\.\d+)?)\.tar\.bz2/
+  strip:
+    - /libassuan-/
+    - /.tar.bz2/
+
+provides:
+  - bin/libassuan-config
+
+build:
+  script:
+    - ./configure --prefix={{prefix}}
+    - make
+    - make check
+    - make install
+
+  dependencies:
+    gnupg.org/libgpg-error: 1
+  env:
+    darwin:
+      # otherwise it tries to link both libc++ and libstdc++, which gives
+      # duplicate symbol errors.
+      CFLAGS: $CFLAGS -std=gnu89
+      CXXFLAGS: "$CXXFLAGS -stdlib=libstdc++ -std=c++03"
+
+# What libassuan LINKS, as opposed to what its build runs.
+#
+# libgpg-error was declared under build.dependencies and nowhere else, so a
+# closure that installs libassuan gets none of it, and libassuan.0.dylib names
+# it:
+#
+#   @rpath/gnupg.org/libgpg-error/v1.61.0/lib/libgpg-error.0.dylib
+#
+# Same shape as gnupg.org/gpgme, one layer down, and the same consequence: it
+# stopped poppler's darwin/aarch64 build in g-ir-scanner, which loads the chain
+# to generate Poppler-0.18.gir.
+#
+# The full-version v1.61.0 is the other half and a rebuild fixes it — that path
+# predates bk reducing a reference to the major line its dependency guarantees.
+dependencies:
+  gnupg.org/libgpg-error: ^1
+
+test: test "$(libassuan-config --version)" = "{{version}}"
