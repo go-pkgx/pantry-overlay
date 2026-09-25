@@ -19,7 +19,30 @@ dependencies:
   #
   # Declaration only, no rebuild: the reference is already major-versioned, so
   # it resolves as soon as libxml2 is in the closure.
-  gnome.org/libxml2: ^2
+  #
+  # 2026-09-24: ^2 is not tight enough, and the difference is not academic.
+  # libxml2's soname is CURRENT − AGE = MAJOR + LIBXML_MINOR_COMPAT, and
+  # upstream sets MINOR_COMPAT=14 from 2.14 on:
+  #
+  #   2.13.9   version-info (2+13):9:13 -> 15 − 13 = 2  -> libxml2.2.dylib
+  #   >=2.14   CURRENT=MAJOR+MINOR, AGE=MINOR−14 -> 16  -> libxml2.16.dylib
+  #
+  # Both answer ^2. hwloc rebuilt against 2.15.4 records libxml2.16.dylib and
+  # runs alone — and dies in any environment that also holds poppler, whose
+  # gettext pins ~2.13:
+  #
+  #   $ pkgx +open-mpi.org/hwloc +poppler.freedesktop.org -- hwloc-annotate --version
+  #   dyld: Library not loaded: @rpath/gnome.org/libxml2/v2/lib/libxml2.16.dylib
+  #   (the store ships libxml2.2.dylib)
+  #
+  # Every constraint there is satisfied. >=2.14 makes that combination REFUSE,
+  # naming both demands, instead of installing a binary that cannot start.
+  #
+  # It is still not the right thing to be able to say: the key is the SONAME and
+  # the constraint language has no word for it, so this names the first version
+  # whose soname is 16 and cannot say "until it changes again" — see
+  # go-pkgx/packages#225.
+  gnome.org/libxml2: '>=2.14'
 
 build:
   dependencies:
