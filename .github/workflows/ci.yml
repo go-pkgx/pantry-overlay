@@ -1,9 +1,10 @@
 name: ci
 
-# 137 recipes that CONSUMERS read over HTTP, and until now nothing checked one.
-# An overlay recipe is not a build input we can retry: `pkgx` fetches it while
-# resolving a closure, so a file that does not parse breaks every install of
-# that project, silently, for everyone — with no build to go red first.
+# 183 recipes that CONSUMERS read over HTTP, and until this lane existed
+# nothing checked one. An overlay recipe is not a build input we can retry:
+# `pkgx` fetches it while resolving a closure, so a file that does not parse
+# breaks every install of that project, silently, for everyone — with no build
+# to go red first.
 #
 # This lane is deliberately narrow. It does not judge whether a recipe BUILDS;
 # it judges whether a recipe can be READ, which is the failure this repository
@@ -23,47 +24,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: every recipe parses, and says what it provides
-        run: |
-          python3 - <<'PY'
-          import glob, sys, yaml
+      - uses: actions/setup-go@v6
+        with: { go-version: stable }
 
-          bad = []
-          files = sorted(glob.glob("projects/**/package.yml", recursive=True))
-          if not files:
-              sys.exit("no recipe found under projects/ — the layout changed")
-
-          for f in files:
-              try:
-                  doc = yaml.safe_load(open(f))
-              except Exception as e:
-                  bad.append(f"{f}: does not parse: {e}")
-                  continue
-              if not isinstance(doc, dict):
-                  bad.append(f"{f}: top level is {type(doc).__name__}, want a mapping")
-                  continue
-              # What is asserted here is only what RESOLUTION needs, and only
-              # what this repository can break. The first pass also demanded
-              # `distributable:` and `provides:` and was WRONG on 19 of the 137
-              # recipes: a library (libssh2, libevent, folly, libpq…) provides no
-              # binary, and a vendored one (conda.org, microsoft.com/PowerShell)
-              # has no distributable at all. Borrowed strictness that fails on a
-              # seventh of the corpus is not a check, it is noise.
-              deps = doc.get("dependencies")
-              if deps is not None and not isinstance(deps, dict):
-                  bad.append(f"{f}: `dependencies:` is {type(deps).__name__}, want a mapping")
-              # `provides:` is a list, OR a mapping keyed by platform
-              # (grpc.io and vanitygen-plusplus both do the latter). Demanding a
-              # list was the SECOND thing this check got wrong; each narrowing
-              # came from running it against the corpus rather than from taste.
-              prov = doc.get("provides")
-              if prov is not None and not isinstance(prov, (list, dict)):
-                  bad.append(f"{f}: `provides:` is {type(prov).__name__}, want a list or a platform mapping")
-              if "versions" not in doc and "distributable" not in doc:
-                  bad.append(f"{f}: neither `versions:` nor `distributable:` — nothing to resolve")
-
-          print(f"{len(files)} recipe(s) checked")
-          if bad:
-              print("\n".join("  " + b for b in bad))
-              sys.exit(f"{len(bad)} problem(s)")
-          PY
+      # Read by the LOADER THE BUILDER USES — same formats, same schema, same
+      # refusals — rather than by a script that re-states parts of the schema
+      # in another language.
+      #
+      # The script this replaces did exactly what a second opinion eventually
+      # does: it went looking for package.yml, found none the day these recipes
+      # became HCL, and said "the layout changed". That is the mildest way the
+      # divergence could have presented. The next one would have been a recipe
+      # it judged fine and the builder could not read.
+      #
+      # `bk lint` FAILS on an empty tree. A sweep that cannot find its corpus
+      # reports the same absence of problems as one that read it all, and the
+      # count it prints is the only thing that tells the two apart.
+      - name: every recipe can be read
+        run: go run github.com/go-pkgx/bk/cmd/bk@main lint --dir .
