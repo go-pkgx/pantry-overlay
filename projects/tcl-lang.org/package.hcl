@@ -243,11 +243,18 @@ distributable {
   url = "https://downloads.sourceforge.net/project/tcl/Tcl/{{version}}/tcl{{version}}-src.tar.gz"
 }
 
+# Enumerate where the tarball actually LIVES. `distributable` above downloads
+# from SourceForge, while this scraped tcl-lang.org's download page, which
+# lists only what upstream currently recommends — so when 8.6.16 dropped off
+# that page, this recipe could no longer name a version SourceForge still
+# serves. Upstream's pantry was corrected; this copy was not, and the overlay
+# WINS for a consumer, so the stale enumeration is the one tcl versions were
+# being resolved with.
 versions {
-  match = "/tcl\\d+\\.\\d+\\.\\d+-src\\.tar\\.gz/"
+  match = "/Tcl\\/\\d+\\.\\d+\\.\\d+\\//"
   strip = [
-    "/^tcl/",
-    "/-src\\.tar\\.gz/",
+    "/^Tcl\\//",
+    "/\\/$/",
   ]
-  url = "https://www.tcl-lang.org/software/tcltk/download.html"
+  url = "https://sourceforge.net/projects/tcl/files/Tcl/"
 }
