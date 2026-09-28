@@ -25,7 +25,23 @@ provides = [
 build {
   dependencies = {
     "cmake.org" = ">=3<3.29"
-    "crates.io/semverator" = "*"
+    # darwin only. Every call to semverator in the script below sits in an
+    # `elif`, behind `if test "{{hw.platform}}" = "linux"` — so on linux it is
+    # installed and never run, and installing it is not free: it pulls
+    # rust-lang.org and rust-lang.org/cargo, and cargo's own build needs
+    # llvm.org. That cycle has no entry point, and on an architecture with no
+    # bottles yet it is where a seed stops.
+    #
+    # It has to be scoped in BOTH halves. go-pkgx/packages carries the same
+    # change as an override for the recipe bk builds; this is the half a
+    # consumer resolves from, and since go-pkgx/bk#224 the factory's closure
+    # takes the UNION of the two — so leaving it unscoped here keeps the cycle
+    # alive whichever way the other half is written. Measured: the pantry-only
+    # closure for linux/s390x names neither rust nor semverator, and adding
+    # this overlay put all three back.
+    darwin = {
+      "crates.io/semverator" = "*"
+    }
     "ninja-build.org" = 1
     "python.org" = ">=3<3.12"
   }
@@ -124,7 +140,11 @@ distributable {
 
 test {
   dependencies = {
-    "crates.io/semverator" = "*"
+    # darwin only, for the same reason as the build dependency above: the
+    # linux arm of the chain in this script never calls it.
+    darwin = {
+      "crates.io/semverator" = "*"
+    }
   }
   fixture = <<EOT
 #include <stdio.h>
