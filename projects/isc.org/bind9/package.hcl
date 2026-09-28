@@ -1,53 +1,18 @@
 dependencies = {
   "github.com/json-c/json-c" = 0.18
-  "gnome.org/libxml2" = 2.13
-  "gnu.org/libidn2" = 2.3
-  "gnu.org/readline" = 8.2
-  "jemalloc.net" = 5
-  "liburcu.org" = 0.15
-  "libuv.org" = 1.49
+  "gnome.org/libxml2"        = 2.13
+  "gnu.org/libidn2"          = 2.3
+  "gnu.org/readline"         = 8.2
+  "jemalloc.net"             = 5
+  "liburcu.org"              = 0.15
+  "libuv.org"                = 1.49
   linux = {
     "kernel.org/libcap" = "*"
   }
-  "nghttp2.org" = 1.57
+  "nghttp2.org"          = 1.57
   "openldap.org/liblmdb" = 0.9
-  "openssl.org" = "^3"
+  "openssl.org"          = "^3"
 }
-display-name = "bind9"
-provides = [
-  "bin/arpaname",
-  "bin/delv",
-  "bin/dig",
-  "bin/dnssec-cds",
-  "bin/dnssec-dsfromkey",
-  "bin/dnssec-importkey",
-  "bin/dnssec-keyfromlabel",
-  "bin/dnssec-keygen",
-  "bin/dnssec-revoke",
-  "bin/dnssec-settime",
-  "bin/dnssec-signzone",
-  "bin/dnssec-verify",
-  "bin/host",
-  "bin/mdig",
-  "bin/named-checkconf",
-  "bin/named-checkzone",
-  "bin/named-compilezone",
-  "bin/named-journalprint",
-  "bin/named-rrchecker",
-  "bin/nsec3hash",
-  "bin/nslookup",
-  "bin/nsupdate",
-  "sbin/ddns-confgen",
-  "sbin/named",
-  "sbin/rndc",
-  "sbin/rndc-confgen",
-  "sbin/tsig-keygen",
-]
-test = [
-  "named -V",
-  "named -V | grep 'BIND {{version}}'",
-  "dig pkgx.sh",
-]
 
 build {
   dependencies = {
@@ -55,7 +20,7 @@ build {
     linux = {
       "nixos.org/patchelf" = "*"
     }
-    "mesonbuild.com" = 1
+    "mesonbuild.com"  = 1
     "ninja-build.org" = "*"
   }
   script = [
@@ -105,13 +70,4 @@ build {
       ]
     }
   }
-}
-
-distributable {
-  strip-components = 1
-  url = "https://downloads.isc.org/isc/bind9/{{version}}/bind-{{version}}.tar.xz"
-}
-
-versions {
-  gitlab = "gitlab.isc.org:isc-projects/bind9/tags"
 }

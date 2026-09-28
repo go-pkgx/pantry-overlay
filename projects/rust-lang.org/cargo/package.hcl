@@ -1,20 +1,13 @@
-companions = {
-  "git-scm.org" = "^2"
-  "rust-lang.org" = "*"
-}
 dependencies = {
-  "curl.se" = 8
+  "curl.se"          = 8
   "curl.se/ca-certs" = "*"
-  "libgit2.org" = "~1.7"
+  "libgit2.org"      = "~1.7"
   linux = {
     "llvm.org" = "*"
   }
   "openssl.org" = "^3"
-  "zlib.net" = "^1"
+  "zlib.net"    = "^1"
 }
-provides = [
-  "bin/cargo",
-]
 
 build {
   dependencies = {
@@ -22,14 +15,14 @@ build {
     linux = {
       "gnu.org/gcc" = "*"
     }
-    "openssl.org" = "^3"
-    "rust-lang.org" = "^1.85"
+    "openssl.org"         = "^3"
+    "rust-lang.org"       = "^1.85"
     "rust-lang.org/cargo" = "*"
-    "tukaani.org/xz" = "*"
+    "tukaani.org/xz"      = "*"
   }
   script = [
     {
-      if = "linux"
+      if  = "linux"
       run = <<EOT
 set -eu
 L=""
@@ -109,12 +102,12 @@ cargo --version
 EOT
     },
     {
-      if = "<0.76.0"
+      if   = "<0.76.0"
       prop = <<EOT
 /^\[features\]\$/a\
 default = ['curl/force-system-lib-on-osx']
 EOT
-      run = "sed -i -f $PROP Cargo.toml"
+      run  = "sed -i -f $PROP Cargo.toml"
     },
     "cargo install --root={{ prefix }} --locked --path=.",
   ]
@@ -123,42 +116,4 @@ EOT
     LIBGIT2_SYS_USE_PKG_CONFIG = 1
     LIBSSH2_SYS_USE_PKG_CONFIG = 1
   }
-}
-
-distributable {
-  strip-components = 1
-  url = "https://github.com/rust-lang/cargo/archive/refs/tags/{{version}}.tar.gz"
-}
-
-runtime {
-
-  env {
-    CARGO_INSTALL_ROOT = "$${{home}}/.local"
-
-    linux {
-      CARGO_HTTP_CAINFO = "$${{deps.curl.se/ca-certs.prefix}}/ssl/cert.pem"
-    }
-  }
-}
-
-test {
-  dependencies = {
-    "git-scm.org" = "^2"
-    "rust-lang.org" = "*"
-  }
-  script = [
-    "cargo init . --name xyz_tea_fixture",
-    "echo 'fn main() {println!(\"Hello World!\");}' >src/main.rs",
-    "cargo clippy",
-    "cargo run",
-    "cargo run --release",
-    "export CARGO_INSTALL_ROOT=$HOME/.local",
-    "cargo install cowsay",
-    "test -x ~/.local/bin/cowsay",
-    "~/.local/bin/cowsay xyz.tea.hi",
-  ]
-}
-
-versions {
-  github = "rust-lang/cargo/tags"
 }

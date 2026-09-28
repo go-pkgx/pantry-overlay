@@ -1,131 +1,22 @@
 dependencies = {
-  "facebook.com/zstd" = "^1"
+  "facebook.com/zstd"             = "^1"
   "github.com/besser82/libxcrypt" = "^4"
-  "gnome.org/libxml2" = "~2.13"
-  "invisible-island.net/ncurses" = "^6"
-  "openssl.org" = "^3"
-  "pcre.org/v2" = "^10"
-  "sourceware.org/bzip2" = "^1"
-  "zlib.net" = "^1"
+  "gnome.org/libxml2"             = "~2.13"
+  "invisible-island.net/ncurses"  = "^6"
+  "openssl.org"                   = "^3"
+  "pcre.org/v2"                   = "^10"
+  "sourceware.org/bzip2"          = "^1"
+  "zlib.net"                      = "^1"
 }
-display-name = "MariaDB"
-platforms = [
-  "darwin/aarch64",
-  "linux/x86-64",
-]
-provides = [
-  "bin/aria_chk",
-  "bin/aria_dump_log",
-  "bin/aria_ftdump",
-  "bin/aria_pack",
-  "bin/aria_read_log",
-  "bin/aria_s3_copy",
-  "bin/innochecksum",
-  "bin/mariabackup",
-  "bin/mariadb",
-  "bin/mariadb-access",
-  "bin/mariadb-admin",
-  "bin/mariadb-backup",
-  "bin/mariadb-binlog",
-  "bin/mariadb-check",
-  "bin/mariadb-client-test",
-  "bin/mariadb-config",
-  "bin/mariadb-conv",
-  "bin/mariadb-convert-table-format",
-  "bin/mariadb-dump",
-  "bin/mariadb-dumpslow",
-  "bin/mariadb-find-rows",
-  "bin/mariadb-fix-extensions",
-  "bin/mariadb-hotcopy",
-  "bin/mariadb-import",
-  "bin/mariadb-plugin",
-  "bin/mariadb-secure-installation",
-  "bin/mariadb-setpermission",
-  "bin/mariadb-show",
-  "bin/mariadb-slap",
-  "bin/mariadb-test",
-  "bin/mariadb-tzinfo-to-sql",
-  "bin/mariadb-upgrade",
-  "bin/mariadb-waitpid",
-  "bin/mariadb_config",
-  "bin/mariadbd",
-  "bin/mariadbd-multi",
-  "bin/mariadbd-safe",
-  "bin/mariadbd-safe-helper",
-  "bin/mbstream",
-  "bin/msql2mysql",
-  "bin/my_print_defaults",
-  "bin/myisam_ftdump",
-  "bin/myisamchk",
-  "bin/myisamlog",
-  "bin/myisampack",
-  "bin/mysql",
-  "bin/mysql.server",
-  "bin/mysql_client_test",
-  "bin/mysql_config",
-  "bin/mysql_convert_table_format",
-  "bin/mysql_find_rows",
-  "bin/mysql_fix_extensions",
-  "bin/mysql_install_db",
-  "bin/mysql_plugin",
-  "bin/mysql_secure_installation",
-  "bin/mysql_setpermission",
-  "bin/mysql_tzinfo_to_sql",
-  "bin/mysql_upgrade",
-  "bin/mysql_waitpid",
-  "bin/mysqlaccess",
-  "bin/mysqladmin",
-  "bin/mysqlbinlog",
-  "bin/mysqlcheck",
-  "bin/mysqld",
-  "bin/mysqld_multi",
-  "bin/mysqld_safe",
-  "bin/mysqld_safe_helper",
-  "bin/mysqldump",
-  "bin/mysqldumpslow",
-  "bin/mysqlhotcopy",
-  "bin/mysqlimport",
-  "bin/mysqlshow",
-  "bin/mysqlslap",
-  "bin/mysqltest",
-  "bin/mytop",
-  "bin/perror",
-  "bin/replace",
-  "bin/resolve_stack_dump",
-  "bin/resolveip",
-  "bin/wsrep_sst_backup",
-  "bin/wsrep_sst_mariabackup",
-  "bin/wsrep_sst_mysqldump",
-  "bin/wsrep_sst_rsync",
-  "bin/wsrep_sst_rsync_wan",
-]
-test = [
-  "killall mysqld || true",
-  "mkdir -p mysql tmp",
-  {
-    run = <<EOT
-if test "$(id -u)" = "0"; then
-  USER_ARG="--user=root"
-fi
-EOT
-  },
-  "mysql_install_db --no-defaults $USER_ARG --basedir={{ prefix }} --datadir=$(pwd)/mysql --tmpdir=$(pwd)/tmp --auth-root-authentication-method=normal",
-  "mysqld --no-defaults $USER_ARG --datadir=$(pwd)/mysql --port=3306 --tmpdir=$(pwd)/tmp &",
-  "sleep 5",
-  "mysql --port=3306 --user=root --password= --execute='show databases;'",
-  "mysqladmin --port=3306 --user=root --password= shutdown",
-  "sleep 5",
-  "(ps aux | grep mysqld | grep -v grep) && exit 1 || exit 0",
-]
 
 build {
   dependencies = {
-    "cmake.org" = "*"
+    "cmake.org"                  = "*"
     "freedesktop.org/pkg-config" = "*"
-    "git-scm.org" = "*"
-    "gnu.org/bison" = "*"
-    "gnu.org/coreutils" = "*"
-    "groonga.org" = 15
+    "git-scm.org"                = "*"
+    "gnu.org/bison"              = "*"
+    "gnu.org/coreutils"          = "*"
+    "groonga.org"                = 15
     linux = {
       "fmt.dev" = "^9"
     }
@@ -134,7 +25,7 @@ build {
     "git submodule update --init --recursive",
     "rm -rf storage/mroonga/vendor/groonga",
     {
-      if = ">=11.3.2"
+      if  = ">=11.3.2"
       run = <<EOT
 if test "{hw.platform}" = "darwin"; then
   sed -i 's/OS_DATA_FILE_NO_O_DIRECT/OS_DATA_FILE/g' \
@@ -156,7 +47,7 @@ EOT
       working-directory = "$${{ prefix }}/etc"
     },
     {
-      run = "ln -s ../scripts/mysql_install_db ."
+      run               = "ln -s ../scripts/mysql_install_db ."
       working-directory = "$${{ prefix }}/bin"
     },
     {
@@ -167,11 +58,11 @@ EOT
       working-directory = "$${{ prefix }}/support-files"
     },
     {
-      run = "mv ../bin/wsrep_sst_common ."
+      run               = "mv ../bin/wsrep_sst_common ."
       working-directory = "$${{ prefix }}/libexec"
     },
     {
-      run = "sed -i 's|$(dirname \"$0\")/wsrep_sst_common|$(dirname \"$0\")/../libexec/wsrep_sst_common|g' wsrep_sst_mysqldump wsrep_sst_rsync wsrep_sst_mariabackup"
+      run               = "sed -i 's|$(dirname \"$0\")/wsrep_sst_common|$(dirname \"$0\")/../libexec/wsrep_sst_common|g' wsrep_sst_mysqldump wsrep_sst_rsync wsrep_sst_mariabackup"
       working-directory = "$${{ prefix }}/bin"
     },
   ]
@@ -197,19 +88,9 @@ EOT
     ]
 
     linux {
-      CC = "clang"
+      CC  = "clang"
       CXX = "clang++"
-      LD = "clang"
+      LD  = "clang"
     }
   }
-}
-
-distributable {
-  ref = "mariadb-{{version.raw}}"
-  url = "git+https://github.com/MariaDB/server"
-}
-
-versions {
-  github = "MariaDB/server/tags"
-  strip = "/^mariadb-/"
 }

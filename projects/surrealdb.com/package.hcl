@@ -1,24 +1,20 @@
 dependencies = {
   "openssl.org" = "^3"
 }
-provides = [
-  "bin/surreal",
-]
-test = "surreal version"
 
 build {
   dependencies = {
-    "gnu.org/patch" = "*"
-    "rust-lang.org" = ">=1.60"
+    "gnu.org/patch"       = "*"
+    "rust-lang.org"       = ">=1.60"
     "rust-lang.org/cargo" = "*"
   }
   script = [
     {
-      if = "^3.0.3"
-      prop = <<EOT
+      if                = "^3.0.3"
+      prop              = <<EOT
 1i #![recursion_limit = "256"]
 EOT
-      run = "sed -i -f $PROP lib.rs"
+      run               = "sed -i -f $PROP lib.rs"
       working-directory = "surrealdb/server/src"
     },
     "cargo install --path . --locked --root {{prefix}}",
@@ -36,13 +32,4 @@ EOT
       ]
     }
   }
-}
-
-distributable {
-  strip-components = 1
-  url = "https://github.com/surrealdb/surrealdb/archive/refs/tags/{{version.tag}}.tar.gz"
-}
-
-versions {
-  github = "surrealdb/surrealdb"
 }

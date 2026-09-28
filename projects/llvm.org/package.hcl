@@ -1,26 +1,8 @@
 dependencies = {
   "facebook.com/zstd" = "*"
   "gnome.org/libxml2" = "^2"
-  "zlib.net" = 1
+  "zlib.net"          = 1
 }
-provides = [
-  "bin/lld",
-  "bin/lldb",
-  "bin/clang",
-  "bin/clang++",
-  "bin/clangd",
-  "bin/cc",
-  "bin/c++",
-  "bin/cpp",
-  "bin/nm",
-  "bin/objcopy",
-  "bin/ranlib",
-  "bin/readelf",
-  "bin/strings",
-  "bin/strip",
-  "bin/llvm-profdata",
-  "bin/llvm-cov",
-]
 
 build {
   dependencies = {
@@ -43,7 +25,7 @@ build {
       "crates.io/semverator" = "*"
     }
     "ninja-build.org" = 1
-    "python.org" = ">=3<3.12"
+    "python.org"      = ">=3<3.12"
   }
   env = {
     ARGS = [
@@ -113,13 +95,13 @@ for x in nm objcopy ranlib readelf strings strip; do
   ln -sf llvm-$x $x
 done
 EOT
-,
+        ,
       ]
       working-directory = "$${{prefix}}/bin"
     },
     {
-      if = "linux"
-      run = <<EOT
+      if                = "linux"
+      run               = <<EOT
 TARGET="$(find . -maxdepth 1 -type d -name \*-unknown-linux-gnu)"
 if test -n "$TARGET"; then
   mv "$TARGET"/* .
@@ -131,11 +113,6 @@ EOT
     },
   ]
   working-directory = "build"
-}
-
-distributable {
-  strip-components = 1
-  url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-{{ version }}/llvm-project-{{ version }}.src.tar.xz"
 }
 
 test {
@@ -175,9 +152,4 @@ EOT
       "-Wl,-rpath,$PKGX_DIR",
     ]
   }
-}
-
-versions {
-  github = "llvm/llvm-project"
-  strip = "/^llvmorg-/"
 }
