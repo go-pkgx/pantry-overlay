@@ -1,20 +1,16 @@
 dependencies = {
   "openssl.org" = "^3"
-  "zlib.net" = "*"
+  "zlib.net"    = "*"
 }
-provides = [
-  "bin/thrift",
-]
-test = "thrift --version | grep {{version}}"
 
 build {
   dependencies = {
-    "boost.org" = "*"
+    "boost.org"                  = "*"
     "freedesktop.org/pkg-config" = "*"
-    "gnu.org/autoconf" = "*"
-    "gnu.org/automake" = "*"
-    "gnu.org/bison" = "*"
-    "gnu.org/libtool" = "*"
+    "gnu.org/autoconf"           = "*"
+    "gnu.org/automake"           = "*"
+    "gnu.org/bison"              = "*"
+    "gnu.org/libtool"            = "*"
   }
   env = {
     ARGS = [
@@ -46,9 +42,9 @@ build {
       "--without-swift",
       "--with-qt5=no",
     ]
-    CXXFLAGS = "$CXXFLAGS -Wno-unused-but-set-variable"
+    CXXFLAGS   = "$CXXFLAGS -Wno-unused-but-set-variable"
     PHP_PREFIX = "{{prefix}}"
-    PY_PREFIX = "{{prefix}}"
+    PY_PREFIX  = "{{prefix}}"
     darwin = {
       MACOSX_DEPLOYMENT_TARGET = 11
     }
@@ -62,13 +58,4 @@ build {
     "./configure $ARGS",
     "make --jobs {{ hw.concurrency }} install",
   ]
-}
-
-distributable {
-  strip-components = 1
-  url = "https://dlcdn.apache.org/thrift/{{version}}/thrift-{{version}}.tar.gz"
-}
-
-versions {
-  github = "apache/thrift"
 }

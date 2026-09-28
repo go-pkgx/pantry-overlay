@@ -4,18 +4,6 @@ dependencies = {
   }
   "openssl.org" = "^3"
 }
-provides = [
-  "bin/ldapcompare",
-  "bin/ldapdelete",
-  "bin/ldapexop",
-  "bin/ldapmodify",
-  "bin/ldapmodrdn",
-  "bin/ldappasswd",
-  "bin/ldapsearch",
-  "bin/ldapurl",
-  "bin/ldapvc",
-  "bin/ldapwhoami",
-]
 test = "ldapcompare -VV 2>&1 | grep {{version}}"
 
 build {
@@ -58,18 +46,4 @@ EOT
       CFLAGS = "$CFLAGS -Wl,--undefined-version"
     }
   }
-}
-
-distributable {
-  strip-components = 1
-  url = "https://www.openldap.org/software/download/OpenLDAP/openldap-release/openldap-{{version}}.tgz"
-}
-
-versions {
-  match = "/openldap-\\d+\\.\\d+\\.\\d+.tgz/"
-  strip = [
-    "/^openldap-/",
-    "/\\.tgz/",
-  ]
-  url = "https://www.openldap.org/software/download/OpenLDAP/openldap-release/"
 }

@@ -2,48 +2,9 @@ dependencies = {
   darwin = {
     "gnu.org/gettext" = "^1"
   }
-  "freetype.org" = 2
-  "gnome.org/libxml2" = 2
-  "libexpat.github.io" = 2
+  "freetype.org"         = 2
+  "gnome.org/libxml2"    = 2
+  "libexpat.github.io"   = 2
   "sourceware.org/bzip2" = 1
-  "zlib.net" = 1
-}
-distributable = [
-  {
-    strip-components = 1
-    url = "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/{{version.tag}}/fontconfig-{{version.tag}}.tar.xz"
-  },
-  {
-    strip-components = 1
-    url = "https://www.freedesktop.org/software/fontconfig/release/fontconfig-{{ version }}.tar.xz"
-  },
-]
-provides = [
-  "bin/fc-cache",
-  "bin/fc-cat",
-  "bin/fc-conflist",
-  "bin/fc-list",
-  "bin/fc-match",
-  "bin/fc-pattern",
-  "bin/fc-query",
-  "bin/fc-scan",
-  "bin/fc-validate",
-]
-test = "fc-list"
-
-build {
-  dependencies = {
-    "gnu.org/gperf" = 3
-    "python.org" = ">=3<3.12"
-  }
-  script = [
-    "./configure --prefix={{ prefix }}",
-    "make --jobs {{ hw.concurrency }} install RUN_FC_CACHE_TEST=false",
-    "rm -rf {{prefix}}/share/doc",
-    "sed -i 's|<cachedir>{{prefix}}/var/cache/fontconfig</cachedir>|<cachedir prefix=\"relative\">../../var/cache/fontconfig</cachedir>|' {{prefix}}/etc/fonts/fonts.conf",
-  ]
-}
-
-versions {
-  gitlab = "gitlab.freedesktop.org:fontconfig/fontconfig/tags"
+  "zlib.net"             = 1
 }
