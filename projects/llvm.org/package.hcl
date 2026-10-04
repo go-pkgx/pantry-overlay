@@ -1,7 +1,36 @@
 dependencies = {
   "facebook.com/zstd" = "*"
   "gnome.org/libxml2" = "^2"
-  "zlib.net"          = 1
+
+  # On s390x the caret is not an ABI bound. ld.lld NEEDs libxml2.so.16,
+  # which gnome.org/libxml2 2.15 provides and 2.13 does not — 2.13's soname
+  # is libxml2.so.2 — so "^2" installs a library whose soname the LINKER
+  # cannot use:
+  #
+  #   ld.lld: error while loading shared libraries: libxml2.so.16
+  #   cc: error: unable to execute command: No such file or directory
+  #
+  # Builds never met it: a build's environment drags libxml2 in through the
+  # base toolchain. `bk factory --test-only` gives a package only itself and
+  # its test.dependencies, and that lean environment is the first llvm's
+  # linker ever ran in — reported by github.com/westes/flex, which has
+  # nothing to do with libxml2.
+  #
+  # In BOTH halves, for the reason the build.dependencies comment below
+  # already gives: go-pkgx/packages carries the same edit as an override for
+  # the recipe bk builds, and this is the half a CONSUMER resolves from — the
+  # one `pkgx +llvm.org` reads when it assembles a test environment.
+  #
+  # Scoped: a bottle links the soname that was in the store when it was
+  # built, so tightening this for an arch whose bottle links .so.2 would
+  # break it instead. Measured that the platform key wins and the others keep
+  # "^2".
+  #
+  # The soname moved INSIDE a major, which is go-pkgx/packages#233's class.
+  "linux/s390x" = {
+    "gnome.org/libxml2" = "^2.15"
+  }
+  "zlib.net" = 1
 }
 
 build {
