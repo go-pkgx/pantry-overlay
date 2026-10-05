@@ -1,0 +1,155 @@
+# The build toolchain of the sovereign builder image, as a SET.
+#
+# This was builder/toolchain.txt: one `<pkg>[@version]` per line, a flat list
+# outside the recipe format. It could not be versioned, published, installed,
+# or depended on by anything. The three systems that solved this — Nix
+# buildEnv, Guix manifests, Spack environments — all make the set a
+# first-class object, and Nix makes it an ordinary package. So does this.
+#
+# Every entry keeps the reason it was written with, BELOW it, exactly as the
+# text file had it: that is what made the file worth reviewing, and a format
+# that lost it would be a step back.
+#
+# A SET IS UNORDERED, and that is deliberate rather than a limitation. Nix,
+# Guix and Spack manifests are all unordered; the order comes out of
+# concretisation, not out of the file. `bk closure` resolves this set to the
+# same 41 projects as naming its 25 members by hand — verified — differing
+# only in sequence, which the topological walk decides.
+#
+# Which is why seed/order.txt must NOT become a set. That file is a BUILD
+# ORDER: inside a dependency cycle the topological order is a guess, and
+# order.txt is the hand-tuned guess that works. `bk closure --check-order`
+# exists to judge it. A set cannot carry that, and pretending otherwise would
+# throw away the tuning the sovereign generation depends on.
+#
+# builder/toolchain.txt is a different thing — an INSTALL list
+# (`pkgm install -s --prefix /usr -f builder/toolchain.txt`), where order
+# carries nothing. That is why it is the one that could become a set.
+
+members = {
+  "llvm.org" = "*"
+    # clang, lld, compiler-rt — the compiler itself
+
+  "gnu.org/glibc" = "*"
+    # libc, crt objects and the dynamic loader
+
+  "kernel.org/linux-headers" = "~7.2"
+    # glibc's own headers include <linux/limits.h>, and
+    # a scratch image has no /usr/include to fall back on.
+    #
+    # PINNED so every architecture stages the SAME
+    # headers. That is the invariant; the version is
+    # whatever all of them can be given.
+    #
+    # ~7.2 (major.minor, so 7.2.x only), NOT ^7.2:
+    # caret allows minor bumps and would pin nothing.
+    #
+    # It was ~7.1, and that was a MIRROR's limit wearing
+    # the invariant's clothes: dist.pkgx.dev stopped at
+    # 7.1.12 for x86-64 while carrying 7.2.x for
+    # aarch64, so 7.1 was the newest both could be
+    # given. The old note said to lift it "once we
+    # build 7.2.x for x86-64 ourselves" — which is what
+    # happened here.
+    #
+    # What forced the question: the s390x lane builds
+    # everything itself and therefore holds exactly ONE
+    # linux-headers, 7.2.8. The first sovereign s390x
+    # build died in 22 seconds with
+    # builder: resolve closure: no version of
+    # kernel.org/linux-headers satisfies "~7.1"
+    # (available: 1)
+    # A pin written for a stale mirror had become the
+    # thing stopping the architecture that needs no
+    # mirror at all.
+
+  "gnu.org/binutils" = "*"
+    # ar/ranlib: the llvm bottle ships llvm-ar, not `ar`
+
+  "gnu.org/make" = "*"
+    # the build driver most recipes use
+
+  "gnu.org/bash" = "*"
+    # `make` runs every recipe line through /bin/sh
+
+  "gnu.org/coreutils" = "*"
+    # mkdir, install, ln… the vocabulary of a Makefile
+
+  "gnu.org/sed" = "*"
+
+  "gnu.org/grep" = "*"
+
+  "gnu.org/gawk" = "*"
+    # config-header generation (awk scripts)
+
+  "gnu.org/m4" = "*"
+    # autoconf's macro processor
+
+  "gnu.org/findutils" = "*"
+    # find + xargs: nlnetlabs.nl/ldns walks its own
+    # man pages with them at install time
+
+  "gnu.org/diffutils" = "*"
+    # `cmp`, called by recipes' own test steps
+
+  "gnu.org/patch" = "*"
+    # recipes that patch their own sources (openssl.org)
+
+  "gnu.org/autoconf" = "*"
+    # the autotools family, for recipes that regenerate
+
+  "gnu.org/automake" = "*"
+
+  "gnu.org/libtool" = "*"
+
+  "gnu.org/bison" = "*"
+
+  "gnu.org/texinfo" = "*"
+    # makeinfo: some recipes INSTALL .info manuals
+
+  "gnu.org/help2man" = "*"
+    # generates a man page from --help; gnu.org/libidn2
+    # calls it during `make`, and dies 127 without it
+
+  "freedesktop.org/pkg-config" = "*"
+    # configure scripts probe deps through it
+
+  "curl.se" = "*"
+    # recipes that fetch in their own script (ca-certs)
+
+  "gnu.org/gcc/libstdcxx" = "*"
+    # clang itself is a C++ program, and the llvm.org
+    # bottle we install is MIRRORED — linked against the
+    # libstdc++ of whatever distro built it. In a tree
+    # that has no distro, clang does not start:
+    # clang: error while loading shared libraries:
+    # libstdc++.so.6: cannot open shared object file
+    # Measured by staging this list into an Incus
+    # container and running clang in it (2026-08-27).
+
+  "gnu.org/tar" = "*"
+    # `tar` and `gzip` are not conveniences here. A
+
+  "gnu.org/gzip" = "*"
+    # FROM-scratch tree has only what this file names,
+    # and two INDEPENDENT things need them:
+    #
+    # 1. Recipes that fetch in their own script.
+    # google.com/gcloud, groonga.org and mesa3d.org
+    # all do `curl -L … | tar -xz`, and all three
+    # died with
+    # "tar": executable file not found in $PATH
+    # (2026-09-02, one batch).
+    #
+    # 2. automake's own configure probe. libisl's
+    # configure stops at
+    # checking how to create a ustar tar archive... none
+    # and exits 77 — before a compiler runs, on a
+    # recipe that fetches nothing itself.
+    #
+    # BOTH are needed, and gzip is not optional next to
+    # tar: GNU tar delegates `-z` to an EXTERNAL gzip,
+    # so tar alone trades one missing executable for
+    # another. gnu.org/gzip did not exist in any pantry
+    # and was written for this (packages#89).
+}
