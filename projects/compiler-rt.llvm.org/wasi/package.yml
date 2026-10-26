@@ -1,0 +1,82 @@
+distributable:
+  url: https://github.com/llvm/llvm-project/releases/download/llvmorg-{{ version }}/llvm-project-{{ version }}.src.tar.xz
+  strip-components: 1
+
+versions:
+  github: llvm/llvm-project
+  strip: /^llvmorg-/
+
+# The LLVM compiler-rt BUILTINS for wasm32-wasip1, laid out as a clang
+# RESOURCE DIRECTORY (lib/wasm32-unknown-wasip1/libclang_rt.builtins.a plus clang's
+# own headers), so a wasip1 build passes `-resource-dir=<this prefix>`.
+#
+# It is a cross toolchain part: the contents are wasm32 archives, the bottle is
+# published for the HOST platforms (it runs nowhere). Built with the llvm.org
+# bottle from the llvm-project source of the SAME version, following WebAssembly/wasi-sdk's
+# cmake/wasi-sdk-sysroot.cmake (compiler-rt-build-<target>, lines 90-119 at
+# wasi-sdk-34): COMPILER_RT_BAREMETAL_BUILD, per-target runtime dir, only the
+# default target, no sanitizers/profile/fuzzer/xray/orc, -mcpu=lime1.
+#
+# It exists because a Clang package ships no wasm32 builtins, and
+# wasi-libc's build and every wasm link want libclang_rt.builtins ("undefined
+# symbol: __muloti4" otherwise; wasi-libc README, "Other default libraries").
+
+build:
+  dependencies:
+    cmake.org: ^3
+    ninja-build.org: 1
+    python.org: ^3
+    llvm.org: ^{{ version.major }}
+  script:
+    # CMake has no WASI platform module before the one wasi-sdk ships
+    # (cmake/Platform/WASI.cmake: `set(WASI 1)`). The host's build flags
+    # (sovereign sysroot, -fPIC, ...) are for the HOST: none may reach a wasm32 compile.
+    - run: |
+        mkdir -p cmake/Platform
+        cp $PROP cmake/Platform/WASI.cmake
+      prop: |
+        set(WASI 1)
+    - env -u CC -u CXX -u CFLAGS -u CXXFLAGS -u LDFLAGS cmake -S compiler-rt -B build -G Ninja $ARGS
+    - ninja -C build
+    - ninja -C build install
+    # The resource dir must also carry clang's own headers (stddef.h, stdint.h,
+    # ...): wasi-sdk copies the host compiler's include/ into its wasi-resource-dir
+    # for the same reason (wasi-sdk-sysroot.cmake, compiler-rt-post-build).
+    - cp -R "$(clang -print-resource-dir)/include" {{ prefix }}/include
+  env:
+    ARGS:
+      - -DCMAKE_INSTALL_PREFIX={{ prefix }}
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_SYSTEM_NAME=WASI
+      - -DCMAKE_SYSTEM_VERSION=1
+      - -DCMAKE_SYSTEM_PROCESSOR=wasm32
+      - -DCMAKE_MODULE_PATH=$SRCROOT/cmake
+      - -DCMAKE_C_COMPILER=clang
+      - -DCMAKE_CXX_COMPILER=clang++
+      - -DCMAKE_AR=llvm-ar
+      - -DCMAKE_C_COMPILER_WORKS=ON
+      - -DCMAKE_CXX_COMPILER_WORKS=ON
+      - -DCMAKE_C_LINKER_DEPFILE_SUPPORTED=OFF
+      - -DCMAKE_CXX_LINKER_DEPFILE_SUPPORTED=OFF
+      - -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON
+      - -DCOMPILER_RT_BAREMETAL_BUILD=ON
+      - -DCOMPILER_RT_BUILD_XRAY=OFF
+      - -DCOMPILER_RT_INCLUDE_TESTS=OFF
+      - -DCOMPILER_RT_HAS_FPIC_FLAG=OFF
+      - -DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON
+      - -DCOMPILER_RT_BUILD_SANITIZERS=OFF
+      - -DCOMPILER_RT_BUILD_LIBFUZZER=OFF
+      - -DCOMPILER_RT_BUILD_PROFILE=OFF
+      - -DCOMPILER_RT_BUILD_CTX_PROFILE=OFF
+      - -DCOMPILER_RT_BUILD_MEMPROF=OFF
+      - -DCOMPILER_RT_BUILD_ORC=OFF
+      - -DCOMPILER_RT_BUILD_GWP_ASAN=OFF
+      - -DCMAKE_C_COMPILER_TARGET=wasm32-wasip1
+      - -DCMAKE_C_FLAGS=-mcpu=lime1
+      - -DCMAKE_CXX_FLAGS=-mcpu=lime1
+      - -DCMAKE_ASM_FLAGS=-mcpu=lime1
+
+test:
+  script:
+    - test -s {{ prefix }}/lib/wasm32-unknown-wasip1/libclang_rt.builtins.a
+    - test -s {{ prefix }}/include/stddef.h
