@@ -26,9 +26,10 @@ dependencies:
 
 build:
   dependencies:
-    # <3.29 as pantry's libcxx.llvm.org: the 3.31 bottle needs libssl.so.1.1 and
-    # does not start in the sovereign rootfs (first factory run, exit 127).
     cmake.org: '>=3.26<3.29'
+    # cmake's own curl.se `>=5<8.13` resolves to 7.86.0 (libssl.so.1.1, absent
+    # from the rootfs): see compiler-rt.llvm.org/wasi.
+    curl.se: '>=8<8.13'
     ninja-build.org: 1
     llvm.org: '*'
     compiler-rt.llvm.org/wasi: '*'
