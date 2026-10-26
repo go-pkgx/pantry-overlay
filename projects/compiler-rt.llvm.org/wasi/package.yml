@@ -84,6 +84,13 @@ build:
       - -DCOMPILER_RT_BUILD_ORC=OFF
       - -DCOMPILER_RT_BUILD_GWP_ASAN=OFF
       - -DCMAKE_C_COMPILER_TARGET=wasm32-wasip1
+      # The .S files (wasm/__c_longjmp.S, __cpp_exception.S) are ASM, and CMake takes
+      # --target for ASM from its own variable: without it they were compiled for
+      # the HOST, and `-mcpu=lime1` failed on aarch64 ("unsupported argument 'lime1'
+      # to option '-mcpu='", run 40386595428) — while on x86-64 it was silently
+      # accepted, producing a host object inside a wasm archive.
+      - -DCMAKE_ASM_COMPILER_TARGET=wasm32-wasip1
+      - -DCMAKE_CXX_COMPILER_TARGET=wasm32-wasip1
       - -DCMAKE_C_FLAGS=-mcpu=lime1
       - -DCMAKE_CXX_FLAGS=-mcpu=lime1
       - -DCMAKE_ASM_FLAGS=-mcpu=lime1
