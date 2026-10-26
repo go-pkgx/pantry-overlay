@@ -26,7 +26,11 @@ build:
     cmake.org: ^3
     ninja-build.org: 1
     python.org: ^3
-    llvm.org: ^{{ version.major }}
+    # A dependency constraint is not templated (`^{{ version.major }}` reached the
+    # resolver verbatim: "no version of llvm.org satisfies"). Same-major clang is
+    # what matters; the bottle's newest is used, which may lag the source patch
+    # release by a version or two.
+    llvm.org: '*'
   script:
     # CMake has no WASI platform module before the one wasi-sdk ships
     # (cmake/Platform/WASI.cmake: `set(WASI 1)`). The host's build flags
