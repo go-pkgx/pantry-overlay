@@ -40,7 +40,9 @@ build:
       prop: |
         set(WASI 1)
     # Host build flags (the sovereign glibc sysroot, -fPIC, ...) are for the HOST.
-    - env -u CC -u CXX -u CFLAGS -u CXXFLAGS -u LDFLAGS cmake -S . -B build -G Ninja $ARGS
+    # LLVM tools by ABSOLUTE path (a bare name in CMAKE_AR is resolved against the
+    # build directory; see compiler-rt.llvm.org/wasi).
+    - env -u CC -u CXX -u CFLAGS -u CXXFLAGS -u LDFLAGS cmake -S . -B build -G Ninja -DCMAKE_AR="$(command -v llvm-ar)" -DCMAKE_RANLIB="$(command -v llvm-ranlib)" $ARGS
     - ninja -C build
     - ninja -C build install
   env:
@@ -53,7 +55,6 @@ build:
       - -DCMAKE_MODULE_PATH=$SRCROOT/cmakemod
       - -DCMAKE_C_COMPILER=clang
       - -DCMAKE_CXX_COMPILER=clang++
-      - -DCMAKE_AR=llvm-ar
       - -DCMAKE_C_COMPILER_WORKS=ON
       - -DCMAKE_CXX_COMPILER_WORKS=ON
       - -DCMAKE_C_LINKER_DEPFILE_SUPPORTED=OFF
