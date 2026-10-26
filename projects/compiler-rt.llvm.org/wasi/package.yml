@@ -23,7 +23,9 @@ versions:
 
 build:
   dependencies:
-    cmake.org: ^3
+    # <3.29 as pantry's libcxx.llvm.org: the 3.31 bottle needs libssl.so.1.1 and
+    # does not start in the sovereign rootfs (first factory run, exit 127).
+    cmake.org: '>=3<3.29'
     ninja-build.org: 1
     python.org: ^3
     # A dependency constraint is not templated (`^{{ version.major }}` reached the
