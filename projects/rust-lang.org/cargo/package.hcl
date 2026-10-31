@@ -5,7 +5,7 @@ dependencies = {
   linux = {
     "llvm.org" = "*"
   }
-  "openssl.org" = "~3.5"
+  "openssl.org" = "^3"
   "zlib.net"    = "^1"
 }
 
@@ -15,7 +15,7 @@ build {
     linux = {
       "gnu.org/gcc" = "*"
     }
-    "openssl.org"         = "~3.5"
+    "openssl.org"         = "^3"
     "rust-lang.org"       = "^1.85"
     "rust-lang.org/cargo" = "*"
     "tukaani.org/xz"      = "*"
@@ -53,7 +53,7 @@ set -eu
 # pkgx maintains for exactly this.
 O="$${PKGX_DIR:-$HOME/.pkgx}/openssl.org/v3"
 if [ ! -e "$O/include/openssl/ssl.h" ]; then
-  echo "no openssl 3 at $O — is openssl.org ~3.5 a build dep?" >&2
+  echo "no openssl 3 at $O — is openssl.org ^3 a build dep?" >&2
   exit 1
 fi
 export OPENSSL_DIR="$O"

@@ -7,7 +7,7 @@ dependencies = {
     "gnu.org/gcc/libstdcxx" = "^14"
   }
   "lz4.org"              = "^1"
-  "openssl.org"          = "~3.5"
+  "openssl.org"          = "^3"
   "protobuf.dev"         = "^21"
   "thrysoee.dk/editline" = "^3"
   "unicode.org"          = "^71"

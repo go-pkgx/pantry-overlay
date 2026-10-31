@@ -1,6 +1,6 @@
 dependencies = {
   "gnu.org/readline" = "*"
   "kerberos.org"     = "*"
-  "openssl.org"      = "~3.5"
+  "openssl.org"      = "^3"
   "unixodbc.org"     = "*"
 }

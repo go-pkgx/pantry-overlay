@@ -11,7 +11,7 @@ dependencies = {
     "gnu.org/gcc/libstdcxx" = 14
     "libcxx.llvm.org"       = 18
   }
-  "openssl.org" = "~3.5"
+  "openssl.org" = "^3"
   "pcre.org/v2" = "^10"
   "python.org"  = "~3.11"
 }

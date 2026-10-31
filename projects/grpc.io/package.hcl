@@ -23,6 +23,6 @@ dependencies = {
     "gnu.org/gcc/libstdcxx" = 14
     "protobuf.dev"          = "36.2.0"
   }
-  "openssl.org" = "~3.5"
+  "openssl.org" = "^3"
   "zlib.net"    = "*"
 }

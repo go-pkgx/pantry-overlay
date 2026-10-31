@@ -1,6 +1,6 @@
 build {
   dependencies = {
-    "openssl.org" = "~3.5"
+    "openssl.org" = "^3"
   }
   script = <<EOT
 # Makefile is not very flexible, so we have to edit it

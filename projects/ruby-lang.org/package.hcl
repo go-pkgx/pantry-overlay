@@ -1,5 +1,5 @@
 dependencies = {
-  "openssl.org" = "~3.5"
+  "openssl.org" = "^3"
   "pyyaml.org"  = "^0.2"
   "zlib.net"    = "^1"
 }

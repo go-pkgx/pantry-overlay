@@ -1,6 +1,6 @@
 dependencies = {
   linux = {
-    "openssl.org" = "~3.5"
+    "openssl.org" = "^3"
   }
   "zlib.net" = "*"
 }

@@ -1,4 +1,4 @@
 dependencies = {
   "curl.se"     = "^8.4"
-  "openssl.org" = "~3.5"
+  "openssl.org" = "^3"
 }

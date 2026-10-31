@@ -3,7 +3,7 @@ dependencies = {
   linux = {
     "gnu.org/readline" = "*"
   }
-  "openssl.org" = "~3.5"
+  "openssl.org" = "^3"
   "unicode.org" = "^71"
   "zlib.net"    = "^1"
 }
