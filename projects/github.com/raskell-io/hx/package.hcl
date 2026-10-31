@@ -1,6 +1,6 @@
 build {
   dependencies = {
-    "openssl.org"         = "^3"
+    "openssl.org"         = "~3.5"
     "rust-lang.org"       = ">=1.85"
     "rust-lang.org/cargo" = "*"
   }

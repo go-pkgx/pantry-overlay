@@ -2,7 +2,7 @@ dependencies = {
   linux = {
     "github.com/util-linux/util-linux" = "*"
   }
-  "openssl.org" = "^3"
+  "openssl.org" = "~3.5"
 }
 test = "ldapcompare -VV 2>&1 | grep {{version}}"
 

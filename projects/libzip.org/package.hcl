@@ -6,6 +6,6 @@ dependencies = {
   }
   "facebook.com/zstd" = ">=1.5.0"
   linux = {
-    "openssl.org" = "^3"
+    "openssl.org" = "~3.5"
   }
 }

@@ -1,7 +1,7 @@
 dependencies = {
   "freedesktop.org/pkg-config" = "^0.29"
   "freetype.org"               = "^2"
-  "openssl.org"                = "^3"
+  "openssl.org"                = "~3.5"
   "x.org/exts"                 = "^1"
   "x.org/x11"                  = "=1.8.11"
   "zlib.net"                   = "^1.3"

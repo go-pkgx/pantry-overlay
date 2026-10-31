@@ -20,7 +20,7 @@ dependencies = {
     "libcxx.llvm.org"       = "^18"
   }
   "lz4.org"        = 1
-  "openssl.org"    = "^3"
+  "openssl.org"    = "~3.5"
   "tukaani.org/xz" = 5
   "zlib.net"       = "^1"
 }

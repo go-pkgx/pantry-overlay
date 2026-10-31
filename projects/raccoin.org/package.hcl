@@ -1,4 +1,4 @@
 dependencies = {
   "gnu.org/libiconv" = "^1"
-  "openssl.org"      = "^3"
+  "openssl.org"      = "~3.5"
 }

@@ -2,5 +2,5 @@ dependencies = {
   linux = {
     "curl.se" = "*"
   }
-  "openssl.org" = "^3"
+  "openssl.org" = "~3.5"
 }

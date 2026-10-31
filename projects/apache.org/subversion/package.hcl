@@ -7,7 +7,7 @@ dependencies = {
   "kerberos.org"                     = "^1.20"
   "libexpat.github.io"               = "^2"
   "lz4.org"                          = "^1"
-  "openssl.org"                      = "^3"
+  "openssl.org"                      = "~3.5"
   "sqlite.org"                       = "^3"
   "zlib.net"                         = "^1.2"
 }

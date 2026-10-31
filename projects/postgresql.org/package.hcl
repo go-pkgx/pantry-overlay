@@ -3,7 +3,7 @@ dependencies = {
   "gnome.org/libxslt" = "*"
   "gnu.org/readline"  = "*"
   "lz4.org"           = "*"
-  "openssl.org"       = "^3"
+  "openssl.org"       = "~3.5"
   "unicode.org"       = "^73"
   "zlib.net"          = "*"
 }
