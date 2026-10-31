@@ -5,5 +5,5 @@ dependencies = {
     "wayland.freedesktop.org"   = 1
     "x.org/x11"                 = 1
   }
-  "openssl.org" = "^3"
+  "openssl.org" = "~3.5"
 }

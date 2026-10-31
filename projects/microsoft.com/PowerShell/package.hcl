@@ -2,5 +2,5 @@ dependencies = {
   linux = {
     "unicode.org" = "^71"
   }
-  "openssl.org" = "^3"
+  "openssl.org" = "~3.5"
 }

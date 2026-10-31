@@ -3,6 +3,6 @@ dependencies = {
   "graphite.sil.org" = "*"
   "harfbuzz.org"     = "*"
   "libpng.org"       = "*"
-  "openssl.org"      = "^3"
+  "openssl.org"      = "~3.5"
   "unicode.org"      = "^71"
 }
