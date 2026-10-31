@@ -1,5 +1,5 @@
 dependencies = {
-  "openssl.org"     = "~3.5"
+  "openssl.org"     = "^3"
   "speex.org"       = "*"
   "theora.org"      = "*"
   "xiph.org/ogg"    = "*"

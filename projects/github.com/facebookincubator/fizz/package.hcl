@@ -13,7 +13,7 @@ dependencies = {
     "gnu.org/gcc/libstdcxx" = 14
   }
   "lz4.org"              = 1
-  "openssl.org"          = "~3.5"
+  "openssl.org"          = "^3"
   "sourceware.org/bzip2" = 1
   "zlib.net"             = "^1"
 }

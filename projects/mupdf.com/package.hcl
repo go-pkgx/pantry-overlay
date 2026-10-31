@@ -21,6 +21,6 @@ dependencies = {
   }
   "mujs.com"     = "^1"
   "openjpeg.org" = "^2"
-  "openssl.org"  = "~3.5"
+  "openssl.org"  = "^3"
   "zlib.net"     = "^1"
 }

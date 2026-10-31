@@ -20,7 +20,7 @@ build {
     "gnu.org/bc" = "*"
     "gnu.org/bison" = "*"
     "gnu.org/gawk" = "*"
-    "openssl.org" = "~3.5"
+    "openssl.org" = "^3"
   }
   env = {
     HOSTCFLAGS = "-Wno-implicit-function-declaration -Wno-implicit-int -Wno-int-conversion"

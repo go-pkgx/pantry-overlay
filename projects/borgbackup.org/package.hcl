@@ -5,7 +5,7 @@ build {
       "savannah.nongnu.org/acl" = "^2.3.1"
     }
     "lz4.org"     = "*"
-    "openssl.org" = "~3.5"
+    "openssl.org" = "^3"
     "python.org"  = "^3.10"
   }
   script = [

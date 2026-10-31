@@ -25,7 +25,7 @@ dependencies = {
   "libzip.org"                = "^1.9"
   "nghttp2.org"               = "*"
   "openldap.org"              = "^2"
-  "openssl.org"               = "~3.5"
+  "openssl.org"               = "*"
   "pcre.org/v2"               = ">=10.30"
   "postgresql.org"            = "*"
   "re2c.org"                  = "^3"

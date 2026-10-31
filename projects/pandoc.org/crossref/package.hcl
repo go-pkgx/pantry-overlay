@@ -6,7 +6,7 @@ build {
       "gnu.org/binutils" = "~2.44"
       "gnu.org/gcc"      = 14
     }
-    "openssl.org" = "~3.5"
+    "openssl.org" = "^3"
   }
   script = [
     {

@@ -1,7 +1,7 @@
 dependencies = {
   "hboehm.info/gc" = 8
   "libevent.org"   = 2
-  "openssl.org"    = "~3.5"
+  "openssl.org"    = "^3"
   "pcre.org/v2"    = 10
 }
 

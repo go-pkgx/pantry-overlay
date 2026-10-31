@@ -11,7 +11,7 @@ dependencies = {
   }
   "nghttp2.org"          = 1.57
   "openldap.org/liblmdb" = 0.9
-  "openssl.org"          = "~3.5"
+  "openssl.org"          = "^3"
 }
 
 build {

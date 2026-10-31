@@ -4,5 +4,5 @@ dependencies = {
   "libimobiledevice.org/libplist"              = "^2.4"
   "libimobiledevice.org/libtatsu"              = "^1"
   "libimobiledevice.org/libusbmuxd"            = "^2"
-  "openssl.org"                                = "~3.5"
+  "openssl.org"                                = "^3"
 }

@@ -4,5 +4,5 @@ dependencies = {
     "alsa-project.org/alsa-lib" = "^1"
     "freedesktop.org/dbus"      = "^1"
   }
-  "openssl.org" = "~3.5"
+  "openssl.org" = "^3"
 }
