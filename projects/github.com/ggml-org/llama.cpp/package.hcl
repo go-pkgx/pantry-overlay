@@ -12,6 +12,20 @@
 # keeps ggml's runtime CPU dispatch instead, which is what it is for.
 
 display-name = "llama.cpp"
+dependencies = {
+  # TLS for the model downloader. llama.cpp carries its own HTTP client
+  # (cpp-httplib, `common/http.h`) rather than libcurl, and that client only
+  # speaks https when it is compiled against a TLS library: without one,
+  # `common_http_client` refuses at RUN time with a message listing
+  # -DLLAMA_OPENSSL=ON and friends. `LLAMA_OPENSSL` defaults ON and "requires
+  # OpenSSL dev files installed", so leaving this undeclared gets a build that
+  # either fails on a scratch builder or quietly ships without https.
+  #
+  # ^3 for consistency with the rest of the fleet; it resolves to 3.5.x, which
+  # is a supported line. 4.0 is supported too, and moving the fleet to it is a
+  # decision for the fleet, not for a new recipe to make on its own.
+  "openssl.org" = "^3"
+}
 platforms = [
   "darwin/aarch64",
   "darwin/x86-64",
@@ -47,9 +61,16 @@ build {
       "-DLLAMA_BUILD_EXAMPLES=OFF",
       "-DLLAMA_BUILD_TOOLS=ON",
       "-DLLAMA_BUILD_SERVER=ON",
-      # No libcurl dependency: the server still serves, it just will not
-      # fetch a model from a URL. Model files are supplied by the caller.
-      "-DLLAMA_CURL=OFF",
+      # Stated rather than left to the default, so that a builder without
+      # OpenSSL fails here instead of silently producing a binary that cannot
+      # fetch a model over https.
+      #
+      # ⛔ NOT `-DLLAMA_CURL=OFF`. I wrote that first, from the older build
+      # documentation. At this tag `LLAMA_CURL` is deprecated AND ignored —
+      # `llama_option_depr(WARNING LLAMA_CURL)` with no replacement, CMakeLists
+      # line 196 — and libcurl appears nowhere in the build. Setting it OFF
+      # does nothing at all, including not disabling downloads.
+      "-DLLAMA_OPENSSL=ON",
     ]
 
     darwin {
