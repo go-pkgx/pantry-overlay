@@ -61,6 +61,17 @@ build {
       "-DLLAMA_BUILD_EXAMPLES=OFF",
       "-DLLAMA_BUILD_TOOLS=ON",
       "-DLLAMA_BUILD_SERVER=ON",
+      # ⛔ BUILDING THE TOOLS IS NOT INSTALLING THEM. Every `install(TARGETS)`
+      # for llama-cli, llama-bench and llama-server sits behind
+      # `if(LLAMA_TOOLS_INSTALL)`, so without it `cmake --install` would place
+      # the libraries and none of the three binaries this recipe `provides`.
+      #
+      # It currently defaults to LLAMA_STANDALONE, which is ON for a top-level
+      # build like ours, so this changes nothing TODAY. It is stated because
+      # `provides` depends on it: if upstream flips the default, the recipe
+      # should keep installing what it promises rather than start publishing a
+      # bottle with no executables in it.
+      "-DLLAMA_TOOLS_INSTALL=ON",
       # Stated rather than left to the default, so that a builder without
       # OpenSSL fails here instead of silently producing a binary that cannot
       # fetch a model over https.
