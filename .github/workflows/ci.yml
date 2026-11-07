@@ -37,8 +37,17 @@ jobs:
       # divergence could have presented. The next one would have been a recipe
       # it judged fine and the builder could not read.
       #
-      # `bk lint` FAILS on an empty tree. A sweep that cannot find its corpus
+      # `zbk lint` FAILS on an empty tree. A sweep that cannot find its corpus
       # reports the same absence of problems as one that read it all, and the
       # count it prints is the only thing that tells the two apart.
+      #
+      # ⛔⛔ AND THIS STEP ITSELF STOPPED RUNNING, FOR THE SAME CLASS OF REASON.
+      # It invoked `github.com/go-pkgx/bk/cmd/bk@main`. After the rename that
+      # module still resolves — `go` finds v0.69.1-0.20261107073303-935e7d1626f0
+      # — and simply "does not contain package github.com/go-pkgx/bk/cmd/bk".
+      # So every pull request since the rename failed here, on the toolchain
+      # rather than on a recipe, and no recipe in this repository has been read
+      # by the loader the builder uses since. A gate that fails for a reason of
+      # its own is not a gate; it is a red light nobody reads.
       - name: every recipe can be read
-        run: go run github.com/go-pkgx/bk/cmd/bk@main lint --dir .
+        run: go run github.com/go-zpkg/zbk/cmd/zbk@main lint --dir .
