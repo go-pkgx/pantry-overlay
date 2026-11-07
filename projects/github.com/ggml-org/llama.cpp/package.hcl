@@ -123,13 +123,21 @@ test {
     # Metal would still pass every file-exists check above and would simply be
     # slow, which is the kind of regression nobody notices for months.
     "llama-bench --help 2>&1 | grep -q 'usage'",
+    # ⛔ THIS WAS A `darwin { script = … }` BLOCK, AND IT NEVER RAN.
+    # buildscript.Generate reads only `script`, `working-directory`, `env`
+    # and the node's fixture; a platform-keyed sub-block is not one of them,
+    # and the schema accepted it anyway (additionalProperties: true). So the
+    # Metal assertion above — written precisely because a darwin bottle that
+    # lost Metal passes every other check and is merely slow — has never been
+    # made on any build.
+    #
+    # `if` is the mechanism that works: buildscript.matchGuard resolves a
+    # platform, an arch or an <os>/<arch> against the build target.
+    {
+      if  = "darwin"
+      run = "llama-cli --version 2>&1 | grep -qi 'metal'"
+    },
   ]
-
-  darwin {
-    script = [
-      "llama-cli --version 2>&1 | grep -qi 'metal'",
-    ]
-  }
 }
 
 versions {

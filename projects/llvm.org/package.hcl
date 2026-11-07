@@ -95,9 +95,6 @@ build {
       ]
     }
   }
-  receipt = [
-    "LLVMConfig.cmake",
-  ]
   script = [
     {
       run = <<EOT
@@ -174,6 +171,12 @@ EOT
     "mv $FIXTURE $FIXTURE.c",
     "clang $ARGS $FIXTURE.c",
     "./a.out",
+    # ⛔ THIS WAS `build.receipt = ["LLVMConfig.cmake"]`, WHICH NEVER RAN.
+    # `receipt` has zero occurrences in zbk's and bottle's Go sources: the
+    # schema accepted it (additionalProperties: true) and both sides ignored
+    # it, so the assertion that the cmake package was produced has never been
+    # made. The intent was right, so it moves to a step that executes.
+    "test -f \"{{prefix}}/lib/cmake/llvm/LLVMConfig.cmake\"",
   ]
 
   env {
